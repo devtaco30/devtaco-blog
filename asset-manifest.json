@@ -1,15 +1,16 @@
 {
   "files": {
-    "main.css": "/devtaco-blog/static/css/main.53cfe56c.css",
-    "main.js": "/devtaco-blog/static/js/main.6d840fc6.js",
+    "main.css": "/devtaco-blog/static/css/main.d3d4e587.css",
+    "main.js": "/devtaco-blog/static/js/main.f77485c4.js",
     "static/js/488.0cc69d8e.chunk.js": "/devtaco-blog/static/js/488.0cc69d8e.chunk.js",
+    "static/media/IMG_7712.JPG": "/devtaco-blog/static/media/IMG_7712.dbb39c3be0a4fe7007a7.JPG",
     "index.html": "/devtaco-blog/index.html",
-    "main.53cfe56c.css.map": "/devtaco-blog/static/css/main.53cfe56c.css.map",
-    "main.6d840fc6.js.map": "/devtaco-blog/static/js/main.6d840fc6.js.map",
+    "main.d3d4e587.css.map": "/devtaco-blog/static/css/main.d3d4e587.css.map",
+    "main.f77485c4.js.map": "/devtaco-blog/static/js/main.f77485c4.js.map",
     "488.0cc69d8e.chunk.js.map": "/devtaco-blog/static/js/488.0cc69d8e.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.53cfe56c.css",
-    "static/js/main.6d840fc6.js"
+    "static/css/main.d3d4e587.css",
+    "static/js/main.f77485c4.js"
   ]
 }
