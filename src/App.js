@@ -18,12 +18,10 @@ function App() {
     <Router>
       <div className="App">
         <header className="App-header">
-          <h1>데브타코 개발 블로그</h1>
+          <h1>DevTaco Blog</h1>
           <nav>
             <ul className="nav-links">
               <li><Link to="/"><HomeIcon /> Home</Link></li>
-              <li><Link to="/categories"><CategoryIcon /> Categories</Link></li>
-              <li><Link to="/posts"><ArticleIcon /> Posts</Link></li>
             </ul>
           </nav>
         </header>
@@ -77,9 +75,7 @@ function App() {
             <Grid item xs={12} md={hasAds ? 7.5 : 8}>
               <Paper className="main-content">
                 <Routes>
-                  <Route path="/" element={<Blog />} />
-                  <Route path="/categories" element={<Categories />} />
-                  <Route path="/posts" element={<Blog />} />
+                  <Route path="/devtaco-blog" element={<Blog />} />
                 </Routes>
               </Paper>
             </Grid>
