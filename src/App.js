@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { Container, Grid, Paper } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 import './App.css';
