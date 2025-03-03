@@ -5,7 +5,7 @@ import HomeIcon from '@mui/icons-material/Home';
 import './App.css';
 import VisitorCounter from './components/VisitorCounter';
 
-// 페이지 컴포넌트들
+// 페이지 컴포넌트들 
 import Blog from './Blog';
 import Profile from './components/Profile';
 
@@ -15,6 +15,7 @@ function App() {
     console.log('=== DevTaco Blog ===');
     console.log('Version:', process.env.REACT_APP_VERSION || '1.0.0');
     console.log('Build Time:', process.env.REACT_APP_BUILD_TIME || new Date().toLocaleString());
+    console.log('Test Log');
     
     // 환경변수 확인용 로깅
     console.log('Firebase Config:', {
