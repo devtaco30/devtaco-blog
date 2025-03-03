@@ -1,0 +1,16 @@
+{
+  "files": {
+    "main.css": "/devtaco-blog/static/css/main.fb97bdf8.css",
+    "main.js": "/devtaco-blog/static/js/main.db6b2584.js",
+    "static/js/488.0cc69d8e.chunk.js": "/devtaco-blog/static/js/488.0cc69d8e.chunk.js",
+    "static/media/IMG_7712.JPG": "/devtaco-blog/static/media/IMG_7712.dbb39c3be0a4fe7007a7.JPG",
+    "index.html": "/devtaco-blog/index.html",
+    "main.fb97bdf8.css.map": "/devtaco-blog/static/css/main.fb97bdf8.css.map",
+    "main.db6b2584.js.map": "/devtaco-blog/static/js/main.db6b2584.js.map",
+    "488.0cc69d8e.chunk.js.map": "/devtaco-blog/static/js/488.0cc69d8e.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.fb97bdf8.css",
+    "static/js/main.db6b2584.js"
+  ]
+}
