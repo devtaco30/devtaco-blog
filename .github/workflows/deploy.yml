@@ -25,28 +25,23 @@ jobs:
         node-version: '18'
 
     - name: Clean Install
-      run: |
-        rm -rf node_modules
-        rm -rf build
-        npm ci
+      run: npm ci
 
     - name: Create env file
       run: |
         echo "REACT_APP_FIREBASE_API_KEY=${{ secrets.REACT_APP_FIREBASE_API_KEY }}" >> .env
         echo "REACT_APP_FIREBASE_DATABASE_URL=${{ secrets.REACT_APP_FIREBASE_DATABASE_URL }}" >> .env
         echo "REACT_APP_FIREBASE_PROJECT_ID=${{ secrets.REACT_APP_FIREBASE_PROJECT_ID }}" >> .env
+        echo "REACT_APP_BUILD_TIME=$(date)" >> .env
+        echo "REACT_APP_VERSION=1.0.0" >> .env
 
     - name: Build
       run: npm run build
 
-    - name: Setup Pages
-      uses: actions/configure-pages@v4
-
-    - name: Upload artifact
-      uses: actions/upload-pages-artifact@v3
+    - name: Deploy
+      uses: peaceiris/actions-gh-pages@v3
       with:
-        path: './build'
-
-    - name: Deploy to GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v4
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./build
+        force_orphan: true
+        clean: true
