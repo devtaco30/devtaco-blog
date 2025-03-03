@@ -8,7 +8,6 @@ import VisitorCounter from './components/VisitorCounter';
 // 페이지 컴포넌트들
 import Blog from './Blog';
 import Profile from './components/Profile';
-import Categories from './components/Categories';
 
 function App() {
   const hasAds = false;  // 광고 데이터 존재 여부를 확인하는 상태
