@@ -35,12 +35,13 @@ jobs:
         echo "REACT_APP_BUILD_TIME=$(date)" >> .env
         echo "REACT_APP_VERSION=1.0.0" >> .env
 
-    - name: Build
+    - name: Build project
       run: |
         npm run build
-        ls -la build  # build 폴더 내용 확인
+        touch build/.nojekyll  # Jekyll 비활성화
+        ls -la build
 
-    - name: Deploy
+    - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
