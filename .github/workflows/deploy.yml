@@ -25,22 +25,20 @@ jobs:
         node-version: '18'
 
     - name: Clean Install
-      run: |
-        rm -rf node_modules
-        rm -rf build
-        npm ci
+      run: npm ci
 
     - name: Create env file
       run: |
         echo "REACT_APP_FIREBASE_API_KEY=${{ secrets.REACT_APP_FIREBASE_API_KEY }}" >> .env
         echo "REACT_APP_FIREBASE_DATABASE_URL=${{ secrets.REACT_APP_FIREBASE_DATABASE_URL }}" >> .env
         echo "REACT_APP_FIREBASE_PROJECT_ID=${{ secrets.REACT_APP_FIREBASE_PROJECT_ID }}" >> .env
+        echo "REACT_APP_BUILD_TIME=$(date)" >> .env
+        echo "REACT_APP_VERSION=1.0.0" >> .env
 
     - name: Build
       run: |
-        echo "REACT_APP_BUILD_TIME=$(date)" >> .env
-        echo "REACT_APP_VERSION=1.0.0" >> .env
         npm run build
+        ls -la build  # build 폴더 내용 확인
 
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v3
