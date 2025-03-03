@@ -11,8 +11,17 @@ import Profile from './components/Profile';
 
 function App() {
   useEffect(() => {
-    console.log('DevTaco Blog v1.0.0');
-    console.log('Last deployed:', new Date().toLocaleString());
+    // 기본 버전 로깅
+    console.log('=== DevTaco Blog ===');
+    console.log('Version:', process.env.REACT_APP_VERSION || '1.0.0');
+    console.log('Build Time:', process.env.REACT_APP_BUILD_TIME || new Date().toLocaleString());
+    
+    // 환경변수 확인용 로깅
+    console.log('Firebase Config:', {
+      apiKey: process.env.REACT_APP_FIREBASE_API_KEY ? 'exists' : 'missing',
+      databaseURL: process.env.REACT_APP_FIREBASE_DATABASE_URL ? 'exists' : 'missing',
+      projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID ? 'exists' : 'missing'
+    });
   }, []);
 
   const hasAds = false;  // 광고 데이터 존재 여부를 확인하는 상태
