@@ -7,7 +7,6 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2
 
@@ -16,25 +15,18 @@ jobs:
       with:
         node-version: '18'
 
-    - name: Install Dependencies
+    - name: Clean Install
       run: |
-        npm install
-        npm list firebase # firebase 설치 확인
-
-    - name: Create env file
-      run: |
-        echo "REACT_APP_FIREBASE_API_KEY=${{ secrets.REACT_APP_FIREBASE_API_KEY }}" >> .env
-        echo "REACT_APP_FIREBASE_DATABASE_URL=${{ secrets.REACT_APP_FIREBASE_DATABASE_URL }}" >> .env
-        echo "REACT_APP_FIREBASE_PROJECT_ID=${{ secrets.REACT_APP_FIREBASE_PROJECT_ID }}" >> .env
-        cat .env # env 파일 내용 확인 (시크릿 값은 가려짐)
+        rm -rf node_modules
+        rm -rf build
+        npm ci
 
     - name: Build
-      run: |
-        npm run build
-        ls -la build # 빌드 결과물 확인
+      run: npm run build
 
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./build 
+        publish_dir: ./build
+        force_orphan: true 
