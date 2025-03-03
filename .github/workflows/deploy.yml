@@ -17,16 +17,21 @@ jobs:
         node-version: '18'
 
     - name: Install Dependencies
-      run: npm install
+      run: |
+        npm install
+        npm list firebase # firebase 설치 확인
 
     - name: Create env file
       run: |
         echo "REACT_APP_FIREBASE_API_KEY=${{ secrets.REACT_APP_FIREBASE_API_KEY }}" >> .env
         echo "REACT_APP_FIREBASE_DATABASE_URL=${{ secrets.REACT_APP_FIREBASE_DATABASE_URL }}" >> .env
         echo "REACT_APP_FIREBASE_PROJECT_ID=${{ secrets.REACT_APP_FIREBASE_PROJECT_ID }}" >> .env
+        cat .env # env 파일 내용 확인 (시크릿 값은 가려짐)
 
     - name: Build
-      run: npm run build
+      run: |
+        npm run build
+        ls -la build # 빌드 결과물 확인
 
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v3
