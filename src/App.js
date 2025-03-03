@@ -1,10 +1,9 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { Container, Grid, Paper, Box } from '@mui/material';
+import { Container, Grid, Paper } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
-import ArticleIcon from '@mui/icons-material/Article';
-import CategoryIcon from '@mui/icons-material/Category';
 import './App.css';
+import VisitorCounter from './components/VisitorCounter';
 
 // 페이지 컴포넌트들
 import Blog from './Blog';
@@ -63,11 +62,7 @@ function App() {
                 }}
               >
                 <Profile />
-                <Box className="visitor-counter">
-                  <h3>방문자 수</h3>
-                  <p>Today: 100</p>
-                  <p>Total: 1,000</p>
-                </Box>
+                <VisitorCounter />
               </Paper>
             </Grid>
 
@@ -75,7 +70,7 @@ function App() {
             <Grid item xs={12} md={hasAds ? 7.5 : 8}>
               <Paper className="main-content">
                 <Routes>
-                  <Route path="/devtaco-blog" element={<Blog />} />
+                  <Route path="/" element={<Blog />} />
                 </Routes>
               </Paper>
             </Grid>
@@ -89,14 +84,6 @@ function App() {
                     <div className="ad-placeholder">
                       광고 영역
                     </div>
-                  </div>
-                  <div className="popular-posts">
-                    <h3>인기 게시물</h3>
-                    <ul>
-                      <li>게시물 1</li>
-                      <li>게시물 2</li>
-                      <li>게시물 3</li>
-                    </ul>
                   </div>
                 </Paper>
               </Grid>

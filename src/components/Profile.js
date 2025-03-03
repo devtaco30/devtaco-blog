@@ -71,7 +71,7 @@ function Profile() {
             <GitHubIcon />
           </IconButton>
           <IconButton 
-            href="mailto:contact@devtaco.com"
+            href="mailto:devtaco30@gmail.com"
             sx={{ 
               '&:hover': { 
                 backgroundColor: 'rgba(0,0,0,0.04)',

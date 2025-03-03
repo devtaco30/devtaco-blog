@@ -80,3 +80,11 @@ footer {
   color: white;
   text-align: center;
 }
+
+body {
+  font-family: 'Poppins', 'Noto Sans KR', sans-serif;
+}
+
+.MuiTypography-root {
+  font-family: 'Poppins', 'Noto Sans KR', sans-serif !important;
+}
