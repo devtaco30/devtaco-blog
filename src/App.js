@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { Container, Grid, Paper } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
@@ -10,6 +10,11 @@ import Blog from './Blog';
 import Profile from './components/Profile';
 
 function App() {
+  useEffect(() => {
+    console.log('DevTaco Blog v1.0.0');
+    console.log('Last deployed:', new Date().toLocaleString());
+  }, []);
+
   const hasAds = false;  // 광고 데이터 존재 여부를 확인하는 상태
 
   return (
