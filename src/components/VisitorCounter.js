@@ -3,9 +3,9 @@ import { Box, Typography, CircularProgress } from '@mui/material';
 
 const VisitorCounter = () => {
   const [visitors, setVisitors] = useState({
-    today: 42,    // 임의의 숫자
-    total: 1234,  // 임의의 숫자
-    loading: false
+    today: 0,     // 0으로 초기화
+    total: 0,     // 0으로 초기화
+    loading: true  // 로딩 상태로 시작
   });
 
   const isFirebaseConfigured = Boolean(process.env.REACT_APP_FIREBASE_API_KEY);
