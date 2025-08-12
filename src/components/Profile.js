@@ -2,7 +2,7 @@ import React from 'react';
 import { Avatar, Box, Typography, IconButton, Stack } from '@mui/material';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import EmailIcon from '@mui/icons-material/Email';
-import profileImage from '../IMG_7712.JPG';
+import profileImage from '../IMG_9335.jpg';
 
 function Profile() {
   return (
