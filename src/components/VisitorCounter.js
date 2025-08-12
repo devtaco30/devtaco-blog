@@ -9,21 +9,21 @@ const VisitorCounter = () => {
   });
 
   const isFirebaseConfigured = Boolean(process.env.REACT_APP_FIREBASE_API_KEY);
-  
-  // 디버깅용 로그 (임시)
-  console.log('Firebase API Key:', process.env.REACT_APP_FIREBASE_API_KEY);
-  console.log('isFirebaseConfigured:', isFirebaseConfigured);
 
   useEffect(() => {
+    console.log('Firebase 초기화 시작');
     // Firebase 환경변수가 없으면 Firebase 로직 실행하지 않음
     if (!isFirebaseConfigured) {
+      console.log('Firebase 환경변수 없음, 초기화 중단');
       return;
     }
 
     const initFirebase = async () => {
       try {
+        console.log('Firebase 모듈 로딩 시작');
         const { database } = await import('../firebase');
         const { ref, onValue, increment, update } = await import('firebase/database');
+        console.log('Firebase 모듈 로딩 성공');
         
         const today = new Date().toISOString().split('T')[0];
         const visitorsRef = ref(database, 'visitors');
@@ -53,6 +53,7 @@ const VisitorCounter = () => {
           });
         });
 
+        console.log('Firebase 방문자 데이터 리스너 설정 완료');
         updateVisitors();
 
         return () => {
