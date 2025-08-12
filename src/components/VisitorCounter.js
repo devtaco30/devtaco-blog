@@ -9,6 +9,10 @@ const VisitorCounter = () => {
   });
 
   const isFirebaseConfigured = Boolean(process.env.REACT_APP_FIREBASE_API_KEY);
+  
+  // 디버깅용 로그 (임시)
+  console.log('Firebase API Key:', process.env.REACT_APP_FIREBASE_API_KEY);
+  console.log('isFirebaseConfigured:', isFirebaseConfigured);
 
   useEffect(() => {
     // Firebase 환경변수가 없으면 Firebase 로직 실행하지 않음
