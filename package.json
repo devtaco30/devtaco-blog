@@ -4,14 +4,18 @@
   "private": true,
   "homepage": "https://devtaco30.github.io/devtaco-blog",
   "dependencies": {
+    "@craco/craco": "^7.1.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^6.4.3",
     "@mui/material": "^6.4.3",
+    "buffer": "^6.0.3",
     "cra-template": "1.2.0",
     "firebase": "^11.4.0",
+    "gray-matter": "^4.0.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^7.1.5",
     "react-scripts": "5.0.1",
     "web-vitals": "^4.2.4"
@@ -19,12 +23,13 @@
   "scripts": {
     "predeploy": "npm run build:prod",
     "deploy": "gh-pages -d build",
-    "start": "react-scripts start",
-    "start:local": "PUBLIC_URL='' react-scripts start",
-    "build": "react-scripts build",
-    "build:prod": "PUBLIC_URL='/devtaco-blog' react-scripts build",
+    "start": "npm run generate-posts-list && react-scripts start",
+    "start:local": "npm run generate-posts-list && PUBLIC_URL='' react-scripts start",
+    "build": "npm run generate-posts-list && react-scripts build",
+    "build:prod": "npm run generate-posts-list && PUBLIC_URL='/devtaco-blog' react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "generate-posts-list": "node scripts/generate-posts-list.js"
   },
   "eslintConfig": {
     "extends": [
@@ -46,6 +51,7 @@
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "gh-pages": "^6.3.0"
+    "gh-pages": "^6.3.0",
+    "raw-loader": "^4.0.2"
   }
 }

@@ -2,12 +2,15 @@ import React, { useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { Container, Grid, Paper } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
+import ArticleIcon from '@mui/icons-material/Article';
 import './App.css';
 import VisitorCounter from './components/VisitorCounter';
 
 // 페이지 컴포넌트들 
 import Blog from './Blog';
 import Profile from './components/Profile';
+import BlogList from './components/BlogList';
+import BlogPost from './components/BlogPost';
 
 function App() {
   useEffect(() => {
@@ -35,6 +38,7 @@ function App() {
           <nav>
             <ul className="nav-links">
               <li><Link to="/"><HomeIcon /> Home</Link></li>
+              <li><Link to="/posts"><ArticleIcon /> Posts</Link></li>
             </ul>
           </nav>
         </header>
@@ -42,12 +46,12 @@ function App() {
         <Container 
           maxWidth="xl"
           sx={{
-            px: { xs: 2, sm: 3, md: 4 },
+            px: { xs: 1, sm: 2, md: 4 },
           }}
         >
           <Grid 
             container 
-            spacing={3}
+            spacing={{ xs: 2, md: 3 }}
             sx={{
               maxWidth: '1800px',
               margin: '0 auto',
@@ -59,10 +63,10 @@ function App() {
               <Paper 
                 className="sidebar"
                 sx={{
-                  position: 'sticky',
-                  top: '2rem',
-                  maxHeight: 'calc(100vh - 4rem)',
-                  overflowY: 'auto',
+                  position: { xs: 'static', md: 'sticky' },
+                  top: { xs: 'auto', md: '2rem' },
+                  maxHeight: { xs: 'auto', md: 'calc(100vh - 4rem)' },
+                  overflowY: { xs: 'visible', md: 'auto' },
                   '&::-webkit-scrollbar': {
                     width: '0.4em'
                   },
@@ -85,6 +89,8 @@ function App() {
               <Paper className="main-content">
                 <Routes>
                   <Route path="/" element={<Blog />} />
+                  <Route path="/posts" element={<BlogList />} />
+                  <Route path="/posts/:slug" element={<BlogPost />} />
                 </Routes>
               </Paper>
             </Grid>

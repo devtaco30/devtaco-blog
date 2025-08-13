@@ -15,6 +15,11 @@ const VisitorCounter = () => {
     // Firebase 환경변수가 없으면 Firebase 로직 실행하지 않음
     if (!isFirebaseConfigured) {
       console.log('Firebase 환경변수 없음, 초기화 중단');
+      setVisitors({
+        today: 0,
+        total: 0,
+        loading: false
+      });
       return;
     }
 
@@ -75,7 +80,19 @@ const VisitorCounter = () => {
 
 
   if (visitors.loading) {
-    return <CircularProgress size={20} />;
+    return (
+      <Box className="visitor-counter" sx={{ p: 2 }}>
+        <Typography variant="h6" gutterBottom>
+          방문자 수
+        </Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'center' }}>
+          <CircularProgress size={16} sx={{ mb: 1 }} />
+          <Typography variant="body2" color="text.secondary">
+            로딩 중...
+          </Typography>
+        </Box>
+      </Box>
+    );
   }
 
   return (
