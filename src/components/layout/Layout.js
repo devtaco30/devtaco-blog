@@ -1,13 +1,23 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container, Grid, Box, IconButton } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
-import SearchIcon from '@mui/icons-material/Search';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import TerminalNavigation from './TerminalNavigation';
 import { useTerminalNavigation } from '../../hooks/useTerminalNavigation';
 
 const Layout = ({ children }) => {
   const { terminalOpen, toggleTerminal, closeTerminal, handleNavigationClick } = useTerminalNavigation();
+  const [showShortcut, setShowShortcut] = useState(true);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      setShowShortcut(scrollY < 100); // 100px 스크롤 후 숨김
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
     <div className="App">
@@ -28,6 +38,8 @@ const Layout = ({ children }) => {
             sx={{
               color: '#000000',
               backgroundColor: 'rgba(0, 0, 0, 0.1)',
+              opacity: showShortcut ? 1 : 0.3,
+              transition: 'opacity 0.3s ease',
               '&:hover': {
                 backgroundColor: 'rgba(0, 0, 0, 0.2)'
               }
@@ -35,54 +47,46 @@ const Layout = ({ children }) => {
           >
             <MenuIcon />
           </IconButton>
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: 0.2,
-            animation: 'bounce 1.5s infinite',
-            '@keyframes bounce': {
-              '0%, 50%, 100%': {
-                transform: 'translateY(0)'
-              },
-              '25%, 75%': {
-                transform: 'translateY(-6px)'
-              }
-            }
-          }}>
-            <ArrowBackIcon sx={{ 
-              fontSize: '2rem', 
-              color: 'rgba(0, 0, 0, 0.6)',
-              alignSelf: 'center'
-            }} />
+          {showShortcut && (
             <Box sx={{ 
               display: 'flex', 
               alignItems: 'center', 
-              gap: 1,
-              fontSize: '1rem',
-              color: '#666666',
-              fontFamily: '"Courier New", "Consolas", "Monaco", "Menlo", monospace',
-              backgroundColor: 'rgba(0, 0, 0, 0.05)',
-              padding: '6px 10px',
-              borderRadius: '6px',
-              border: '1px solid rgba(0, 0, 0, 0.1)',
-              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+              gap: 0.2,
+              animation: 'bounce 1.5s infinite',
+              '@keyframes bounce': {
+                '0%, 50%, 100%': {
+                  transform: 'translateY(0)'
+                },
+                '25%, 75%': {
+                  transform: 'translateY(-6px)'
+                }
+              }
             }}>
-              <span>{navigator.platform.includes('Mac') ? '⌘+M' : 'Ctrl+M'}</span>
+              <ArrowBackIcon sx={{ 
+                fontSize: '2rem', 
+                color: 'rgba(0, 0, 0, 0.6)',
+                alignSelf: 'center'
+              }} />
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 1,
+                fontSize: '1rem',
+                color: '#666666',
+                fontFamily: '"Courier New", "Consolas", "Monaco", "Menlo", monospace',
+                backgroundColor: 'rgba(0, 0, 0, 0.05)',
+                padding: '6px 10px',
+                borderRadius: '6px',
+                border: '1px solid rgba(0, 0, 0, 0.1)',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+              }}>
+                <span>{navigator.platform.includes('Mac') ? '⌘+M' : 'Ctrl+M'}</span>
+              </Box>
             </Box>
-          </Box>
+          )}
         </Box>
         
-        <IconButton 
-          sx={{
-            color: '#000000',
-            backgroundColor: 'rgba(0, 0, 0, 0.1)',
-            '&:hover': {
-              backgroundColor: 'rgba(0, 0, 0, 0.2)'
-            }
-          }}
-        >
-          <SearchIcon />
-        </IconButton>
+
       </Box>
 
       <Container 

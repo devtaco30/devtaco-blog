@@ -194,7 +194,7 @@ const Home = () => {
                 >
                   {post.frontmatter.title}
                 </Typography>
-                {index < featuredPosts.length - 1 && (
+                {(index === 0 || index === featuredPosts.length - 1) && (
                   <Divider sx={{ my: 1, backgroundColor: '#000000' }} />
                 )}
               </Box>

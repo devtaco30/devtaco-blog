@@ -4,9 +4,6 @@ date: "2025-08-12"
 tags: ["Kotlin", "Coroutines", "Async", "Concurrency"]
 excerpt: "Kotlin Coroutines를 사용하여 비동기 프로그래밍을 마스터해보세요."
 ---
-
-# Kotlin Coroutines 완벽 가이드
-
 안녕하세요! 오늘은 Kotlin Coroutines에 대해 자세히 알아보겠습니다.
 
 ## Coroutines란?

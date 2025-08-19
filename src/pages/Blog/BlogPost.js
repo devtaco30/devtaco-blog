@@ -89,7 +89,7 @@ const BlogPost = () => {
           to="/posts"
           sx={{ 
             textDecoration: 'none',
-            color: 'primary.main',
+            color: '#000000',
             fontWeight: 'bold'
           }}
         >
@@ -100,16 +100,16 @@ const BlogPost = () => {
   }
 
   return (
-    <Box sx={{ p: 4 }}>
+    <Box sx={{ maxWidth: '80%', mx: 'auto', p: { xs: 2, md: 3 }, pt: { xs: 5, md: 6 } }}>
       {/* Breadcrumbs */}
-      <Breadcrumbs sx={{ mb: 3 }}>
+      <Breadcrumbs sx={{ mb: 1 }}>
         <Link 
           component={RouterLink} 
           to="/"
           sx={{ 
             textDecoration: 'none',
-            color: 'text.secondary',
-            '&:hover': { color: 'primary.main' }
+            color: 'rgba(0, 0, 0, 0.6)',
+            '&:hover': { color: '#000000' }
           }}
         >
           홈
@@ -119,30 +119,30 @@ const BlogPost = () => {
           to="/posts"
           sx={{ 
             textDecoration: 'none',
-            color: 'text.secondary',
-            '&:hover': { color: 'primary.main' }
+            color: 'rgba(0, 0, 0, 0.6)',
+            '&:hover': { color: '#000000' }
           }}
         >
           게시글
         </Link>
-        <Typography color="text.primary">{post.frontmatter.title}</Typography>
+        <Typography color="#000000">{post.frontmatter.title}</Typography>
       </Breadcrumbs>
 
       {/* 게시글 헤더 */}
-      <Paper elevation={1} sx={{ p: 3, mb: 4 }}>
-        <Typography variant="h3" gutterBottom sx={{ fontWeight: 'bold' }}>
+      <Paper elevation={1} sx={{ p: { xs: 1.5, md: 2 }, mb: 2 }}>
+        <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
           {post.frontmatter.title}
         </Typography>
         
         <Typography 
           variant="body1" 
-          color="text.secondary" 
-          sx={{ mb: 2 }}
+          color="rgba(0, 0, 0, 0.6)" 
+          sx={{ mb: 1 }}
         >
           📅 {new Date(post.frontmatter.date).toLocaleDateString('ko-KR')}
         </Typography>
         
-        <Typography variant="body1" sx={{ mb: 3, fontSize: '1.1rem' }}>
+        <Typography variant="body1" sx={{ mb: 1, fontSize: '1.1rem' }}>
           {post.frontmatter.excerpt}
         </Typography>
         
@@ -151,8 +151,11 @@ const BlogPost = () => {
             <Chip 
               key={tag} 
               label={tag} 
-              color="primary" 
-              variant="outlined"
+              sx={{
+                backgroundColor: '#ffffff',
+                color: '#000000',
+                border: '1px solid #000000'
+              }}
             />
           ))}
         </Box>
@@ -202,11 +205,11 @@ const BlogPost = () => {
             },
             '& blockquote': {
               borderLeft: '4px solid',
-              borderColor: 'primary.main',
+              borderColor: '#000000',
               pl: 2,
               ml: 0,
               fontStyle: 'italic',
-              color: 'text.secondary'
+              color: 'rgba(0, 0, 0, 0.6)'
             }
           }}
         >
@@ -221,7 +224,7 @@ const BlogPost = () => {
           to="/posts"
           sx={{ 
             textDecoration: 'none',
-            color: 'primary.main',
+            color: '#000000',
             fontWeight: 'bold',
             display: 'inline-flex',
             alignItems: 'center',

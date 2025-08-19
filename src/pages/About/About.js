@@ -17,6 +17,7 @@ const About = () => {
   return (
     <Box sx={{ 
       p: 4, 
+      pt: 8,  // 상단 여백 추가
       backgroundColor: '#ffffff',
       minHeight: '100vh'
     }}>
@@ -44,13 +45,13 @@ const About = () => {
             }}
           />
           <Box sx={{ flex: 1 }}>
-            <Typography variant="h3" gutterBottom sx={{ 
+            <Typography variant="h4" gutterBottom sx={{ 
               fontWeight: 'bold',
               color: '#000000'
             }}>
               박종혁 (DevTaco)
             </Typography>
-            <Typography variant="h5" gutterBottom sx={{ 
+            <Typography variant="h6" gutterBottom sx={{ 
               color: '#000000', 
               mb: 2,
               fontWeight: 'normal'

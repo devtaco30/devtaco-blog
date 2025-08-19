@@ -5,8 +5,6 @@ tags: ["Spring Boot", "MSA", "Java", "Microservices"]
 excerpt: "Spring Boot를 사용하여 마이크로서비스 아키텍처를 구축하는 방법을 알아봅니다."
 ---
 
-# Spring Boot로 MSA 구축하기
-
 안녕하세요! 오늘은 Spring Boot를 사용하여 마이크로서비스 아키텍처(MSA)를 구축하는 방법에 대해 이야기해보겠습니다.
 
 ## MSA란?
