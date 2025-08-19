@@ -12,12 +12,16 @@
     "buffer": "^6.0.3",
     "cra-template": "1.2.0",
     "firebase": "^11.4.0",
+    "framer-motion": "^12.23.12",
     "gray-matter": "^4.0.3",
     "react": "^19.0.0",
+    "react-chrono": "^2.9.1",
     "react-dom": "^19.0.0",
+    "react-intersection-observer": "^9.16.0",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.1.5",
     "react-scripts": "5.0.1",
+    "react-vertical-timeline-component": "^3.5.3",
     "web-vitals": "^4.2.4"
   },
   "scripts": {
