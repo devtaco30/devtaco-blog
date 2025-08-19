@@ -13,7 +13,7 @@ import {
   Stack
 } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
-import { getAllPosts } from '../utils/markdown';
+import { getAllPosts } from '../../utils/markdown';
 import ArticleIcon from '@mui/icons-material/Article';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import TagIcon from '@mui/icons-material/Tag';

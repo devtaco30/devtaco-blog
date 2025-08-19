@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Typography, Card, CardContent } from '@mui/material';
 import SchoolIcon from '@mui/icons-material/School';
 import { motion } from 'framer-motion';
-import { education } from '../../data/education';
+import { education } from '../../../data/education';
 
 const EducationSection = () => {
   return (

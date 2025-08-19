@@ -3,7 +3,7 @@ import { Box, Typography, Chip } from '@mui/material';
 import { Chrono } from 'react-chrono';
 // import WorkIcon from '@mui/icons-material/Work';
 import { motion } from 'framer-motion';
-import { experience } from '../../data/experience';
+import { experience } from '../../../data/experience';
 
 const WorkExperienceSection = () => {
   // CSS로 인터페이스 요소 숨기기

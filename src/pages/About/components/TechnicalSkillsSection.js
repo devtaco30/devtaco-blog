@@ -3,7 +3,7 @@ import { Box, Typography, Card } from '@mui/material';
 import CodeIcon from '@mui/icons-material/Code';
 import StorageIcon from '@mui/icons-material/Storage';
 import { motion } from 'framer-motion';
-import { skills, getProgressBarConfig } from '../../data/skills';
+import { skills, getProgressBarConfig } from '../../../data/skills';
 
 const TechnicalSkillsSection = () => {
   const [hoveredSkill, setHoveredSkill] = React.useState(null);

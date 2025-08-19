@@ -11,7 +11,7 @@ import {
   Paper
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { getPostBySlug } from '../utils/markdown';
+import { getPostBySlug } from '../../utils/markdown';
 
 const BlogPost = () => {
   const { slug } = useParams();

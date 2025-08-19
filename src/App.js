@@ -1,13 +1,12 @@
 import React, { useEffect } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
-import Layout from './components/Layout';
+import Layout from './components/layout/Layout';
 import './App.css';
 
 // 페이지 컴포넌트들
-import Home from './components/Home';
-import BlogList from './components/BlogList';
-import BlogPost from './components/BlogPost';
-import About from './components/About';
+import Home from './pages/Home';
+import { BlogList, BlogPost } from './pages/Blog';
+import About from './pages/About';
 
 function AppContent() {
   useEffect(() => {

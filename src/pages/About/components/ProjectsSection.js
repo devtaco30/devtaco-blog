@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Typography, Card, CardContent, Chip } from '@mui/material';
 import { motion } from 'framer-motion';
-import { projects } from '../../data/projects';
+import { projects } from '../../../data/projects';
 
 const ProjectsSection = () => {
   return (

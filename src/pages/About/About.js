@@ -7,11 +7,11 @@ import {
   Divider
 } from '@mui/material';
 import { motion } from 'framer-motion';
-import WorkExperienceSection from './sections/WorkExperienceSection';
-import EducationSection from './sections/EducationSection';
-import TechnicalSkillsSection from './sections/TechnicalSkillsSection';
-import ProjectsSection from './sections/ProjectsSection';
-import CurrentFocusSection from './sections/CurrentFocusSection';
+import WorkExperienceSection from './components/WorkExperienceSection';
+import EducationSection from './components/EducationSection';
+import TechnicalSkillsSection from './components/TechnicalSkillsSection';
+import ProjectsSection from './components/ProjectsSection';
+import CurrentFocusSection from './components/CurrentFocusSection';
 
 const About = () => {
   return (

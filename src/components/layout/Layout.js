@@ -4,7 +4,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import SearchIcon from '@mui/icons-material/Search';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import TerminalNavigation from './TerminalNavigation';
-import { useTerminalNavigation } from '../hooks/useTerminalNavigation';
+import { useTerminalNavigation } from '../../hooks/useTerminalNavigation';
 
 const Layout = ({ children }) => {
   const { terminalOpen, toggleTerminal, closeTerminal, handleNavigationClick } = useTerminalNavigation();

@@ -6,7 +6,7 @@ import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import WorkIcon from '@mui/icons-material/Work';
 import ArchitectureIcon from '@mui/icons-material/Architecture';
-import profileImage from '../IMG_9335.jpg';
+import profileImage from '../../IMG_9335.jpg';
 
 function Profile() {
   return (
