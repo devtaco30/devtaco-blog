@@ -1,6 +1,6 @@
 ---
 title: "압도적인 퍼포먼스, Quarkus, 과연 Spring Boot의 대안이 될까?"
-date: "2025-08-20"
+date: "2025-08-19"
 tags: ["Spring Boot", "Quarkus", "Java", "Framework", "Performance"]
 excerpt: "Spring Boot와 Quarkus의 성능, 기능, 사용법을 비교해보고 어떤 상황에서 어떤 프레임워크를 선택해야 하는지 알아봅니다."
 ---
@@ -11,12 +11,12 @@ excerpt: "Spring Boot와 Quarkus의 성능, 기능, 사용법을 비교해보고
 
 <div style="text-align: center; margin: 100px 0; position: relative;">
   <div style="display: inline-block; text-align: center; margin-right: 60px;">
-    <img src="https://devtaco30.github.io/devtaco-blog/images/icons/springboot.png" alt="Spring Boot Logo" width="180" height="180" style="display: block; margin-bottom: 10px;" />
+    <img src="https://devtaco30.github.io/devtaco-blog/images/icons/springboot.png" alt="Spring Boot Logo" style="display: block; margin-bottom: 10px; width: 180px; height: auto; object-fit: contain;" />
     <div style="font-size: 18px; font-weight: bold; color: #333;">Spring Boot</div>
   </div>
   <span style="font-size: 24px; font-weight: bold; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">VS</span>
   <div style="display: inline-block; text-align: center; margin-left: 60px;">
-    <img src="https://devtaco30.github.io/devtaco-blog/images/icons/quarkus.png" alt="Quarkus Logo" width="180" height="180" style="display: block; margin-bottom: 10px;" />
+    <img src="https://devtaco30.github.io/devtaco-blog/images/icons/quarkus.png" alt="Quarkus Logo" style="display: block; margin-bottom: 10px; width: 180px; height: auto; object-fit: contain;" />
     <div style="font-size: 18px; font-weight: bold; color: #333;">Quarkus</div>
   </div>
 </div>
