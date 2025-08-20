@@ -4,7 +4,7 @@ import {
   Typography, 
   Chip, 
   Avatar, 
-  Divider
+  Divider,
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import WorkExperienceSection from './components/WorkExperienceSection';
@@ -30,20 +30,65 @@ const About = () => {
       >
         <Box sx={{ 
           display: 'flex', 
-          alignItems: 'center', 
+          alignItems: 'flex-start', 
           gap: 4, 
           mb: 6,
           flexDirection: { xs: 'column', md: 'row' }
         }}>
-          <Avatar
-            src={`${process.env.PUBLIC_URL}/images/profile/IMG_6985.jpg`}
-            sx={{
-              width: { xs: 150, md: 200 },
-              height: { xs: 150, md: 200 },
-              border: '4px solid #000000',
-              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+          <Box 
+            sx={{ 
+              position: 'relative', 
+              display: 'inline-block',
+              '&:hover .tooltip-text': {
+                opacity: 1,
+                backgroundColor: 'rgba(0, 0, 0, 0.8)'
+              }
             }}
-          />
+          >
+            <Avatar
+              src={`${process.env.PUBLIC_URL}/images/profile/IMG_6985.jpg`}
+              onClick={() => {
+                const link = document.createElement('a');
+                link.href = `${process.env.PUBLIC_URL}/docs/Java_Kotlin_개발자_박종혁.pdf`;
+                link.download = 'Java_Kotlin_개발자_박종혁_이력서.pdf';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+              }}
+              sx={{
+                width: { xs: 150, md: 200 },
+                height: { xs: 150, md: 200 },
+                border: '4px solid #000000',
+                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)',
+                cursor: 'pointer',
+                transition: 'transform 0.2s ease-in-out',
+                '&:hover': {
+                  transform: 'scale(1.05)',
+                  boxShadow: '0 6px 20px rgba(0, 0, 0, 0.3)'
+                }
+              }}
+            />
+            <Box
+              className="tooltip-text"
+              sx={{
+                position: 'absolute',
+                bottom: -40,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                color: 'white',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                fontSize: '12px',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s ease-in-out',
+                opacity: 0.7
+              }}
+            >
+              클릭하여 이력서 다운로드
+            </Box>
+          </Box>
+          
           <Box sx={{ flex: 1 }}>
             <Typography variant="h4" gutterBottom sx={{ 
               fontWeight: 'bold',
