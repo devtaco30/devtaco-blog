@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link as RouterLink } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
 import { 
   Box, 
   Typography, 
@@ -112,7 +114,7 @@ const BlogPost = () => {
             '&:hover': { color: '#000000' }
           }}
         >
-          홈
+          Home
         </Link>
         <Link 
           component={RouterLink} 
@@ -123,7 +125,7 @@ const BlogPost = () => {
             '&:hover': { color: '#000000' }
           }}
         >
-          게시글
+          Posts
         </Link>
         <Typography color="#000000">{post.frontmatter.title}</Typography>
       </Breadcrumbs>
@@ -210,10 +212,53 @@ const BlogPost = () => {
               ml: 0,
               fontStyle: 'italic',
               color: 'rgba(0, 0, 0, 0.6)'
+            },
+            '& table': {
+              borderCollapse: 'collapse',
+              width: '100%',
+              mb: 4,
+              borderRadius: '8px',
+              overflow: 'hidden',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+              fontSize: '0.95rem',
+              fontFamily: 'inherit'
+            },
+            '& th, & td': {
+              border: 'none',
+              padding: '16px 20px',
+              textAlign: 'left',
+              verticalAlign: 'middle'
+            },
+            '& th': {
+              backgroundColor: '#2c3e50',
+              color: '#ffffff',
+              fontWeight: '600',
+              fontSize: '1rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px'
+            },
+            '& tr:nth-child(even)': {
+              backgroundColor: '#f8f9fa'
+            },
+            '& tr:nth-child(odd)': {
+              backgroundColor: '#ffffff'
+            },
+            '& tr:hover': {
+              backgroundColor: '#e3f2fd',
+              transform: 'translateY(-1px)',
+              transition: 'all 0.2s ease'
+            },
+            '& td:first-child': {
+              fontWeight: '600',
+              color: '#2c3e50'
+            },
+            '& td:nth-child(4)': {
+              fontWeight: '600',
+              color: '#e74c3c'
             }
           }}
         >
-          <ReactMarkdown>{post.content}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>{post.content}</ReactMarkdown>
         </Box>
       </Paper>
 

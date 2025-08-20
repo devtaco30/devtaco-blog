@@ -1,10 +1,10 @@
 [
   {
-    "slug": "kotlin-coroutines",
-    "filename": "kotlin-coroutines.md"
+    "slug": "floating-point-finance",
+    "filename": "floating-point-finance.md"
   },
   {
-    "slug": "spring-boot-msa",
-    "filename": "spring-boot-msa.md"
+    "slug": "spring-boot-vs-quarkus",
+    "filename": "spring-boot-vs-quarkus.md"
   }
 ]
