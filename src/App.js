@@ -10,18 +10,7 @@ import About from './pages/About';
 
 function AppContent() {
   useEffect(() => {
-    // 기본 버전 로깅
-    console.log('=== DevTaco Blog ===');
-    console.log('Version:', process.env.REACT_APP_VERSION || '1.0.0');
-    console.log('Build Time:', process.env.REACT_APP_BUILD_TIME || new Date().toLocaleString());
-    console.log('Test Log');
-    
-    // 환경변수 확인용 로깅
-    console.log('Firebase Config:', {
-      apiKey: process.env.REACT_APP_FIREBASE_API_KEY ? 'exists' : 'missing',
-      databaseURL: process.env.REACT_APP_FIREBASE_DATABASE_URL ? 'exists' : 'missing',
-      projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID ? 'exists' : 'missing'
-    });
+    // 앱 초기화
   }, []);
 
   return (

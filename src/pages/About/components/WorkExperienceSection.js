@@ -72,7 +72,7 @@ const WorkExperienceSection = () => {
                 alignItems: 'center',
                 justifyContent: 'flex-end',
                 gap: 0.5,
-                flexWrap: 'nowrap',
+                flexWrap: 'wrap',
                 overflowX: 'auto'
               }}>
                 {exp.technologies.map((tech) => (

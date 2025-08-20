@@ -2,12 +2,10 @@ import matter from 'gray-matter';
 
 // Markdown 파일들을 동적으로 가져오는 함수
 export const getAllPosts = async () => {
-  console.log('getAllPosts 함수 시작');
   const posts = [];
   
   try {
     // posts-list.json에서 게시글 목록 가져오기
-    console.log('posts-list.json 가져오기 시작...');
     const listResponse = await fetch('/devtaco-blog/data/posts-list.json');
     if (!listResponse.ok) {
       throw new Error('posts-list.json을 가져올 수 없습니다');
@@ -27,12 +25,7 @@ export const getAllPosts = async () => {
       }
       
       const markdownContent = await response.text();
-      console.log(`${slug} 원본 내용 길이:`, markdownContent.length);
-      console.log(`${slug} 원본 내용 (처음 200자):`, markdownContent.substring(0, 200));
-      
       const { data, content } = matter(markdownContent);
-      console.log(`${slug} frontmatter:`, data);
-      console.log(`${slug} content 길이:`, content.length);
       
       posts.push({
         slug,
@@ -41,7 +34,6 @@ export const getAllPosts = async () => {
       });
     }
 
-    console.log('최종 posts 배열:', posts);
     // 날짜순으로 정렬 (최신순)
     return posts.sort((a, b) => new Date(b.frontmatter.date) - new Date(a.frontmatter.date));
   } catch (error) {
@@ -53,8 +45,6 @@ export const getAllPosts = async () => {
 // 특정 게시글 가져오기
 export const getPostBySlug = async (slug) => {
   try {
-    console.log(`getPostBySlug: ${slug} 가져오기 시작`);
-    
     // posts-list.json에서 해당 slug의 파일명 찾기
     const listResponse = await fetch('/devtaco-blog/data/posts-list.json');
     if (!listResponse.ok) {
@@ -76,10 +66,7 @@ export const getPostBySlug = async (slug) => {
     }
     
     const markdownContent = await response.text();
-    console.log(`${slug} 원본 내용 길이:`, markdownContent.length);
-    
     const { data, content } = matter(markdownContent);
-    console.log(`${slug} frontmatter:`, data);
     
     return {
       slug,
