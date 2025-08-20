@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Box, 
   Typography, 
@@ -14,6 +15,7 @@ import { getAllPosts } from '../../utils/markdown';
 const Home = () => {
   const [featuredPosts, setFeaturedPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -190,7 +192,7 @@ const Home = () => {
                       textDecoration: 'underline'
                     }
                   }}
-                  onClick={() => window.location.href = `/posts/${post.slug}`}
+                  onClick={() => navigate(`/posts/${post.slug}`)}
                 >
                   {post.frontmatter.title}
                 </Typography>
