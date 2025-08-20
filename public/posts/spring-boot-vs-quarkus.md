@@ -11,12 +11,12 @@ excerpt: "Spring Boot와 Quarkus의 성능, 기능, 사용법을 비교해보고
 
 <div style="text-align: center; margin: 100px 0; position: relative;">
   <div style="display: inline-block; text-align: center; margin-right: 60px;">
-    <img src="http://localhost:3000/devtaco-blog/images/icons/springboot.png" alt="Spring Boot Logo" width="180" height="180" style="display: block; margin-bottom: 10px;" />
+    <img src="https://devtaco30.github.io/devtaco-blog/images/icons/springboot.png" alt="Spring Boot Logo" width="180" height="180" style="display: block; margin-bottom: 10px;" />
     <div style="font-size: 18px; font-weight: bold; color: #333;">Spring Boot</div>
   </div>
   <span style="font-size: 24px; font-weight: bold; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">VS</span>
   <div style="display: inline-block; text-align: center; margin-left: 60px;">
-    <img src="http://localhost:3000/devtaco-blog/images/icons/quarkus.png" alt="Quarkus Logo" width="180" height="180" style="display: block; margin-bottom: 10px;" />
+    <img src="https://devtaco30.github.io/devtaco-blog/images/icons/quarkus.png" alt="Quarkus Logo" width="180" height="180" style="display: block; margin-bottom: 10px;" />
     <div style="font-size: 18px; font-weight: bold; color: #333;">Quarkus</div>
   </div>
 </div>
