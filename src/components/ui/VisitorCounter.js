@@ -13,6 +13,7 @@ const VisitorCounter = () => {
   useEffect(() => {
     // Firebase 환경변수가 없으면 Firebase 로직 실행하지 않음
     if (!isFirebaseConfigured) {
+      console.log('⚠️ Firebase 환경변수가 설정되지 않았습니다. 방문자 카운터가 비활성화됩니다.');
       setVisitors({
         today: 0,
         total: 0,
@@ -29,6 +30,8 @@ const VisitorCounter = () => {
         const today = new Date().toISOString().split('T')[0];
         const visitorsRef = ref(database, 'visitors');
         
+        console.log(`🔥 Firebase 연결 성공! 오늘 날짜: ${today}`);
+        
         // 방문자 수 업데이트
         const updateVisitors = async () => {
           const lastVisit = localStorage.getItem('lastVisit');
@@ -41,17 +44,28 @@ const VisitorCounter = () => {
             updates[`/total`] = increment(1);
             updates[`/daily/${today}`] = increment(1);
             await update(visitorsRef, updates);
+            
+            // 방문 카운트 증가 로그
+            console.log(`🚀 새로운 방문자! 오늘(${today}) 방문자 수 증가`);
+          } else {
+            console.log(`🔄 오늘(${today}) 이미 방문한 사용자입니다.`);
           }
         };
 
         // 실시간 방문자 수 리스너
         const unsubscribe = onValue(visitorsRef, (snapshot) => {
           const data = snapshot.val() || {};
+          const todayCount = data.daily?.[today] || 0;
+          const totalCount = data.total || 0;
+          
           setVisitors({
-            today: data.daily?.[today] || 0,
-            total: data.total || 0,
+            today: todayCount,
+            total: totalCount,
             loading: false
           });
+          
+          // 첫 로딩 시 방문자 수 콘솔 출력
+          console.log(`📊 방문자 통계 - 오늘: ${todayCount}, 전체: ${totalCount}`);
         });
 
         updateVisitors();
