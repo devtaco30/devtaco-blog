@@ -239,16 +239,33 @@ const BlogList = () => {
                 </Typography>
               </Box>
               
-              <Typography 
-                variant="body1" 
-                sx={{ 
-                  color: 'rgba(0, 0, 0, 0.8)',
-                  lineHeight: 1.6,
-                  fontSize: '1rem'
-                }}
-              >
-                {post.frontmatter.excerpt}
-              </Typography>
+              {Array.isArray(post.frontmatter.excerpt) ? (
+                post.frontmatter.excerpt.map((line, index) => (
+                  <Typography
+                    key={index}
+                    variant="body1"
+                    sx={{ 
+                      color: 'rgba(0, 0, 0, 0.8)',
+                      lineHeight: 1.6,
+                      fontSize: '1rem',
+                      mb: index === 0 ? 0 : 0.5
+                    }}
+                  >
+                    {line}
+                  </Typography>
+                ))
+              ) : (
+                <Typography 
+                  variant="body1" 
+                  sx={{ 
+                    color: 'rgba(0, 0, 0, 0.8)',
+                    lineHeight: 1.6,
+                    fontSize: '1rem'
+                  }}
+                >
+                  {post.frontmatter.excerpt}
+                </Typography>
+              )}
             </Box>
             {index < posts.length - 1 && (
               <Box sx={{ height: 1.5, width: '97%', alignSelf: 'center', backgroundColor: 'rgba(0, 0, 0, 0.3)', my: 1 }} />

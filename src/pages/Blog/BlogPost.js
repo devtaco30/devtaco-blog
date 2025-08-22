@@ -144,9 +144,24 @@ const BlogPost = () => {
           📅 {new Date(post.frontmatter.date).toLocaleDateString('ko-KR')}
         </Typography>
         
-        <Typography variant="body1" sx={{ mb: 1, fontSize: '1.1rem' }}>
-          {post.frontmatter.excerpt}
-        </Typography>
+        {Array.isArray(post.frontmatter.excerpt) ? (
+          post.frontmatter.excerpt.map((line, index) => (
+            <Typography
+              key={index}
+              variant="body1"
+              sx={{
+                mb: index === 0 ? 1 : 0.5,
+                fontSize: '1.1rem'
+              }}
+            >
+              {line}
+            </Typography>
+          ))
+        ) : (
+          <Typography variant="body1" sx={{ mb: 1, fontSize: '1.1rem' }}>
+             {post.frontmatter.excerpt}
+          </Typography>
+        )}
         
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
           {post.frontmatter.tags?.map((tag) => (
@@ -258,7 +273,26 @@ const BlogPost = () => {
             }
           }}
         >
-          <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>{post.content}</ReactMarkdown>
+          <ReactMarkdown 
+            remarkPlugins={[remarkGfm]} 
+            rehypePlugins={[rehypeRaw]}
+            components={{
+              img: ({node, ...props}) => (
+                <img 
+                  {...props} 
+                  src={`${process.env.PUBLIC_URL}${props.src}`}
+                  style={{ 
+                    maxWidth: '60%', 
+                    height: 'auto',
+                    display: 'block',
+                    margin: '20px auto'
+                  }}
+                />
+              )
+            }}
+          >
+            {post.content}
+          </ReactMarkdown>
         </Box>
       </Paper>
 
