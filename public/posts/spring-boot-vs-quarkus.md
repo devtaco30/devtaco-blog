@@ -10,14 +10,14 @@ excerpt: "Spring Boot와 Quarkus의 성능, 기능, 사용법을 비교해보고
 
 본 포스팅에서는 두 프레임워크의 주요 차이점과 실제 성능 비교를 통해, 각 프레임워크가 어떤 프로젝트에 더 적합할지 심층적으로 다루어 보겠습니다.
 
-<div style="text-align: center; margin: 100px 0; position: relative;">
+<div style="text-align: center; margin: 100px 0;">
   <div style="display: inline-block; text-align: center; margin-right: 60px;">
-    <img src="https://devtaco30.github.io/devtaco-blog/images/icons/springboot.png" alt="Spring Boot Logo" style="display: block; margin-bottom: 10px; width: 180px; height: auto; object-fit: contain;" />
+    <img src="/images/icons/springboot.png" alt="Spring Boot Logo" style="display: block; margin-bottom: 10px; width: 180px; height: auto; object-fit: contain;" />
     <div style="font-size: 18px; font-weight: bold; color: #333;">Spring Boot</div>
   </div>
-  <span style="font-size: 24px; font-weight: bold; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">VS</span>
+  <span style="font-size: 24px; font-weight: bold; margin: 0 20px;">VS</span>
   <div style="display: inline-block; text-align: center; margin-left: 60px;">
-    <img src="https://devtaco30.github.io/devtaco-blog/images/icons/quarkus.png" alt="Quarkus Logo" style="display: block; margin-bottom: 10px; width: 180px; height: auto; object-fit: contain;" />
+    <img src="/images/icons/quarkus.png" alt="Quarkus Logo" style="display: block; margin-bottom: 10px; width: 180px; height: auto; object-fit: contain;" />
     <div style="font-size: 18px; font-weight: bold; color: #333;">Quarkus</div>
   </div>
 </div>
