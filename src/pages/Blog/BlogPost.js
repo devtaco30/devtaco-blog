@@ -281,6 +281,7 @@ const BlogPost = () => {
                 <img 
                   {...props} 
                   src={`${process.env.PUBLIC_URL}${props.src}`}
+                  alt={props.alt || 'Blog post image'}
                   style={{ 
                     maxWidth: '60%', 
                     height: 'auto',
