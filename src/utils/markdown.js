@@ -15,7 +15,7 @@ export const getAllPosts = async () => {
     console.log('게시글 목록:', postFiles.length, '개');
 
     // 각 게시글 파일 가져오기
-    for (const { slug, filename } of postFiles) {
+    for (const { id, slug, filename } of postFiles) {
       console.log(`처리 중: ${slug}`);
       
       const response = await fetch(`/devtaco-blog/posts/${filename}`);
@@ -28,6 +28,7 @@ export const getAllPosts = async () => {
       const { data, content } = matter(markdownContent);
       
       posts.push({
+        id,
         slug,
         frontmatter: data,
         content
@@ -42,10 +43,47 @@ export const getAllPosts = async () => {
   }
 };
 
-// 특정 게시글 가져오기
+// 특정 게시글 가져오기 (ID 기반)
+export const getPostById = async (id) => {
+  try {
+    // posts-list.json에서 해당 id의 파일명 찾기
+    const listResponse = await fetch('/devtaco-blog/data/posts-list.json');
+    if (!listResponse.ok) {
+      throw new Error('posts-list.json을 가져올 수 없습니다');
+    }
+    
+    const postFiles = await listResponse.json();
+    const postInfo = postFiles.find(post => post.id === id);
+    
+    if (!postInfo) {
+      console.error(`ID를 찾을 수 없습니다: ${id}`);
+      return null;
+    }
+    
+    const response = await fetch(`/devtaco-blog/posts/${postInfo.filename}`);
+    if (!response.ok) {
+      console.error(`${id} 파일을 가져올 수 없습니다:`, response.status);
+      return null;
+    }
+    
+    const markdownContent = await response.text();
+    const { data, content } = matter(markdownContent);
+    
+    return {
+      id,
+      slug: postInfo.slug,
+      frontmatter: data,
+      content
+    };
+  } catch (error) {
+    console.error(`Post not found: ${id}`, error);
+    return null;
+  }
+};
+
+// 기존 slug 기반 함수도 유지 (하위 호환성)
 export const getPostBySlug = async (slug) => {
   try {
-    // posts-list.json에서 해당 slug의 파일명 찾기
     const listResponse = await fetch('/devtaco-blog/data/posts-list.json');
     if (!listResponse.ok) {
       throw new Error('posts-list.json을 가져올 수 없습니다');
@@ -69,6 +107,7 @@ export const getPostBySlug = async (slug) => {
     const { data, content } = matter(markdownContent);
     
     return {
+      id: postInfo.id,
       slug,
       frontmatter: data,
       content

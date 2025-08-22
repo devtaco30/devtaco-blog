@@ -13,17 +13,17 @@ import {
   Paper
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { getPostBySlug } from '../../utils/markdown';
+import { getPostById } from '../../utils/markdown';
 
 const BlogPost = () => {
-  const { slug } = useParams();
+  const { id } = useParams();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        const postData = await getPostBySlug(slug);
+        const postData = await getPostById(id);
         setPost(postData);
       } catch (error) {
         console.error('게시글을 불러오는데 실패했습니다:', error);
@@ -33,7 +33,7 @@ const BlogPost = () => {
     };
 
     fetchPost();
-  }, [slug]);
+  }, [id]);
 
   if (loading) {
     return (

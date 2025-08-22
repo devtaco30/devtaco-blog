@@ -192,7 +192,7 @@ const Home = () => {
                       textDecoration: 'underline'
                     }
                   }}
-                  onClick={() => navigate(`/posts/${post.slug}`)}
+                  onClick={() => navigate(`/posts/${post.id}`)}
                 >
                   {post.frontmatter.title}
                 </Typography>

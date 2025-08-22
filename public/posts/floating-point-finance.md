@@ -1,6 +1,7 @@
 ---
 title: "왜 금융에서는 부동소수점 오류를 예방해야만 하는가?"
 date: "2025-08-20"
+id: "2"
 tags: ["Java", "Kotlin", "Backend", "Finance", "Floating Point", "Precision", "BigDecimal"]
 excerpt: "금융 시스템에서 부동소수점 연산의 위험성과 정확한 계산을 위한 해결 방법을 알아봅니다. Backend 개발자를 위한 실무 가이드입니다."
 ---

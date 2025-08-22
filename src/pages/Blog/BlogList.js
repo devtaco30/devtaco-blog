@@ -206,7 +206,7 @@ const BlogList = () => {
               sx={{ 
                 cursor: 'pointer'
               }}
-              onClick={() => navigate(`/posts/${post.slug}`)}
+              onClick={() => navigate(`/posts/${post.id}`)}
             >
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', mb: 1 }}>
                 <Typography 

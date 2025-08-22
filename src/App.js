@@ -18,7 +18,7 @@ function AppContent() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/posts" element={<BlogList />} />
-        <Route path="/posts/:slug" element={<BlogPost />} />
+        <Route path="/posts/:id" element={<BlogPost />} />
         <Route path="/about" element={<About />} />
       </Routes>
     </Layout>

@@ -1,10 +1,55 @@
 [
   {
-    "slug": "floating-point-finance",
-    "filename": "floating-point-finance.md"
+    "id": "3",
+    "slug": "cursor-ai-pair-programming-review",
+    "filename": "cursor-ai-pair-programming-review.md",
+    "title": "Cursor AI와 함께하는 페어 프로그래밍: Backend 개발자의 생산성 혁신",
+    "date": "2025-08-22",
+    "tags": [
+      "Cursor AI",
+      "AI Coding",
+      "Pair Programming",
+      "Backend Development",
+      "Productivity",
+      "Java",
+      "Kotlin",
+      "Spring Boot"
+    ],
+    "excerpt": [
+      "Cursor AI와 함께 최근 8개월간 페어 프로그래밍을 진행한 Backend 개발자의 생생한 후기!!",
+      "AI 코딩 어시스턴트의 장단점과 실무 적용 팁을 공유합니다."
+    ]
   },
   {
+    "id": "2",
+    "slug": "floating-point-finance",
+    "filename": "floating-point-finance.md",
+    "title": "왜 금융에서는 부동소수점 오류를 예방해야만 하는가?",
+    "date": "2025-08-20",
+    "tags": [
+      "Java",
+      "Kotlin",
+      "Backend",
+      "Finance",
+      "Floating Point",
+      "Precision",
+      "BigDecimal"
+    ],
+    "excerpt": "금융 시스템에서 부동소수점 연산의 위험성과 정확한 계산을 위한 해결 방법을 알아봅니다. Backend 개발자를 위한 실무 가이드입니다."
+  },
+  {
+    "id": "1",
     "slug": "spring-boot-vs-quarkus",
-    "filename": "spring-boot-vs-quarkus.md"
+    "filename": "spring-boot-vs-quarkus.md",
+    "title": "압도적인 퍼포먼스, Quarkus, 과연 Spring Boot의 대안이 될까?",
+    "date": "2025-08-19",
+    "tags": [
+      "Spring Boot",
+      "Quarkus",
+      "Java",
+      "Framework",
+      "Performance"
+    ],
+    "excerpt": "Spring Boot와 Quarkus의 성능, 기능, 사용법을 비교해보고 어떤 상황에서 어떤 프레임워크를 선택해야 하는지 알아봅니다."
   }
 ]
