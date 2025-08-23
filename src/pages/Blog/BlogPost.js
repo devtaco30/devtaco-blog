@@ -278,28 +278,28 @@ const BlogPost = () => {
             rehypePlugins={[rehypeRaw]}
             components={{
               img: ({node, ...props}) => {
-                // 특정 클래스가 있는 이미지는 커스텀 스타일 적용
+                // custom-size 클래스가 있는 이미지는 원래 크기 유지
                 if (props.className && props.className.includes('custom-size')) {
                   return (
                     <img 
                       {...props} 
                       src={`${process.env.PUBLIC_URL}${props.src}`}
                       alt={props.alt || 'Blog post image'}
-                      style={{ 
-                        maxWidth: '60%', 
-                        height: 'auto',
-                        display: 'block',
-                        margin: '20px auto'
-                      }}
                     />
                   );
                 }
-                // 일반 이미지는 원래 크기 유지
+                // 마크다운 이미지와 일반 이미지는 모두 60%로 줄이기
                 return (
                   <img 
                     {...props} 
                     src={`${process.env.PUBLIC_URL}${props.src}`}
                     alt={props.alt || 'Blog post image'}
+                    style={{ 
+                      maxWidth: '60%', 
+                      height: 'auto',
+                      display: 'block',
+                      margin: '20px auto'
+                    }}
                   />
                 );
               }
