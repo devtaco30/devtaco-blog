@@ -4,6 +4,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import TerminalNavigation from './TerminalNavigation';
 import { useTerminalNavigation } from '../../hooks/useTerminalNavigation';
+import VisitorCounter from '../ui/VisitorCounter';
 
 const Layout = ({ children }) => {
   const { terminalOpen, toggleTerminal, closeTerminal, handleNavigationClick } = useTerminalNavigation();
@@ -122,6 +123,11 @@ const Layout = ({ children }) => {
       }}>
         <p>© 2025 DevTaco Blog. All rights reserved.</p>
       </footer>
+
+      {/* Hidden Visitor Counter - 화면에는 보이지 않지만 방문자 카운팅 로직 실행 */}
+      <Box sx={{ display: 'none' }}>
+        <VisitorCounter />
+      </Box>
 
       {/* Terminal Navigation */}
       <TerminalNavigation 
