@@ -24,7 +24,7 @@ const VisitorCounter = () => {
 
     const initFirebase = async () => {
       try {
-        const { database } = await import('../firebase');
+        const { database } = await import('../../firebase');
         const { ref, onValue, increment, update } = await import('firebase/database');
         
         const today = new Date().toISOString().split('T')[0];
