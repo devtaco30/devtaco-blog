@@ -125,7 +125,7 @@ export const cleanupTempImages = async () => {
       if (oldFiles.length > 0) {
         const filePaths = oldFiles.map(file => `temp/${file.name}`);
         await deleteImage(filePaths);
-        console.log(`${oldFiles.length}개의 임시 이미지 정리 완료`);
+  
       }
     }
   } catch (error) {

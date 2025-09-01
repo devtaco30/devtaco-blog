@@ -284,9 +284,7 @@ const PostManager = () => {
   };
 
   const handleEditorDrop = async (event) => {
-    console.log('드롭 이벤트 발생!', event);
     const imageUrls = await handleDropImage(event);
-    console.log('업로드된 이미지 URLs:', imageUrls);
     if (imageUrls.length > 0) {
       // 첫 번째 이미지에 대해 크기 조절 다이얼로그 표시
       setImageSizeDialog({
@@ -386,7 +384,7 @@ const PostManager = () => {
 
   // 로그아웃 처리
   const handleLogout = async () => {
-    console.log('🔄 로그아웃 처리 시작');
+    
     try {
       // 🔥 먼저 홈페이지로 이동 (ProtectedRoute가 리다이렉트하기 전에)
       window.location.hash = HASH_ROUTES.HOME;
@@ -396,7 +394,7 @@ const PostManager = () => {
         console.error('❌ 로그아웃 실패:', error.message);
         showSnackbar('로그아웃 중 오류가 발생했습니다.', 'error');
       } else {
-        console.log('✅ 로그아웃 성공! 홈페이지로 이동');
+
       }
     } catch (error) {
       console.error('💥 로그아웃 중 예외 발생:', error);

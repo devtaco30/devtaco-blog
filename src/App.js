@@ -24,9 +24,7 @@ function AppContent() {
       const refreshToken = urlParams.get('refresh_token');
       
       if (accessToken || refreshToken) {
-        console.log('🔄 OAuth 리다이렉트 감지!');
-        console.log('🔑 Access Token:', accessToken ? '있음' : '없음');
-        console.log('🔄 Refresh Token:', refreshToken ? '있음' : '없음');
+
       }
     };
     

@@ -23,7 +23,7 @@ const LoginPage = () => {
   // 이미 로그인된 상태라면 관리자 페이지로 리다이렉트
   useEffect(() => {
     if (user) {
-      console.log('✅ 이미 로그인된 상태 - 관리자 페이지로 리다이렉트');
+
       navigate(ROUTES.ADMIN_POSTS);
     }
   }, [user, navigate]);
@@ -34,7 +34,7 @@ const LoginPage = () => {
     setError('');
     setLoading(true);
 
-    console.log('🔄 GitHub 로그인 처리 시작');
+    
 
     try {
       const { error } = await signInWithGitHub();
@@ -42,7 +42,7 @@ const LoginPage = () => {
         console.error('❌ GitHub 로그인 실패:', error.message);
         setError(error.message);
       } else {
-        console.log('✅ GitHub 로그인 리다이렉트 성공');
+
       }
       // GitHub OAuth는 팝업이나 리다이렉트로 처리되므로 여기서는 에러만 처리
     } catch (err) {

@@ -113,25 +113,25 @@ const BlogList = () => {
   const formatDate = (timestamp) => {
     if (!timestamp) return '';
     
-    console.log('formatDate 호출됨:', { timestamp, type: typeof timestamp });
-    
-    // bigint 타입의 epoch milliseconds를 처리
+    // epoch milliseconds를 처리 (1724112000000 형태)
     let date;
     if (typeof timestamp === 'bigint' || typeof timestamp === 'number') {
+      // epoch milliseconds를 Date 객체로 변환
       date = new Date(Number(timestamp));
+    } else if (typeof timestamp === 'string') {
+      // ISO 문자열 형태인 경우
+      date = new Date(timestamp);
     } else {
       date = new Date(timestamp);
     }
     
-    console.log('변환된 날짜:', date);
-    
+    // 한국 시간대로 변환하여 표시
     const result = date.toLocaleDateString('ko-KR', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
     });
     
-    console.log('최종 결과:', result);
     return result;
   };
 

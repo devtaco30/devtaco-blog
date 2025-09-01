@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link as RouterLink } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
@@ -13,12 +13,13 @@ import {
   Paper
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { getPostById } from '../../services/posts';
+import { getPostById, incrementViewCount } from '../../services/posts';
 
 const BlogPost = () => {
   const { id } = useParams();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [viewCountIncremented, setViewCountIncremented] = useState(false);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -26,6 +27,8 @@ const BlogPost = () => {
         const { data, error } = await getPostById(id);
         if (error) throw error;
         setPost(data);
+        
+
       } catch (error) {
         console.error('게시글을 불러오는데 실패했습니다:', error);
       } finally {
@@ -35,6 +38,34 @@ const BlogPost = () => {
 
     fetchPost();
   }, [id]);
+
+  // 조회수 증가를 별도의 useEffect로 분리
+  useEffect(() => {
+    if (post && !loading && !viewCountIncremented) {
+      const viewKey = `viewed_${id}`;
+      console.log('조회수 증가 체크:', { viewKey, alreadyViewed: sessionStorage.getItem(viewKey) });
+      
+      if (!sessionStorage.getItem(viewKey)) {
+        console.log('조회수 증가 시작');
+        setViewCountIncremented(true); // 즉시 상태 변경
+        
+        incrementViewCount(id).then(({ data: updatedPost, error }) => {
+          if (!error && updatedPost) {
+            console.log('조회수 증가 성공:', updatedPost.view_count);
+            setPost(updatedPost);
+            sessionStorage.setItem(viewKey, 'true');
+            console.log('세션 스토리지에 조회 기록 저장됨');
+          }
+        }).catch((viewCountError) => {
+          console.error('조회수 증가 실패:', viewCountError);
+          setViewCountIncremented(false); // 에러 시 상태 복구
+        });
+      } else {
+        console.log('이미 조회한 게시글입니다');
+        setViewCountIncremented(true);
+      }
+    }
+  }, [post, id, loading, viewCountIncremented]);
 
   if (loading) {
     return (

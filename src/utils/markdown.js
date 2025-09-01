@@ -12,11 +12,11 @@ export const getAllPosts = async () => {
     }
     
     const postFiles = await listResponse.json();
-    console.log('게시글 목록:', postFiles.length, '개');
+
 
     // 각 게시글 파일 가져오기
     for (const { id, slug, filename } of postFiles) {
-      console.log(`처리 중: ${slug}`);
+      
       
       const response = await fetch(`/devtaco-blog/posts/${filename}`);
       if (!response.ok) {

@@ -1,80 +1,44 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, CircularProgress } from '@mui/material';
+import { supabase } from '../../supabase';
 
 const VisitorCounter = () => {
   const [visitors, setVisitors] = useState({
-    today: 0,     // 0으로 초기화
-    total: 0,     // 0으로 초기화
-    loading: true  // 로딩 상태로 시작
+    today: 0,
+    total: 0,
+    loading: true
   });
-
-  const isFirebaseConfigured = Boolean(process.env.REACT_APP_FIREBASE_API_KEY);
+  const [visitIncremented, setVisitIncremented] = useState(false);
 
   useEffect(() => {
-    // Firebase 환경변수가 없으면 Firebase 로직 실행하지 않음
-    if (!isFirebaseConfigured) {
-      console.log('⚠️ Firebase 환경변수가 설정되지 않았습니다. 방문자 카운터가 비활성화됩니다.');
-      setVisitors({
-        today: 0,
-        total: 0,
-        loading: false
-      });
-      return;
-    }
-
-    const initFirebase = async () => {
+    const fetchVisitorStats = async () => {
       try {
-        const { database } = await import('../../firebase');
-        const { ref, onValue, increment, update } = await import('firebase/database');
-        
+        // 오늘 날짜의 방문자 통계 가져오기
         const today = new Date().toISOString().split('T')[0];
-        const visitorsRef = ref(database, 'visitors');
         
-        console.log(`🔥 Firebase 연결 성공! 오늘 날짜: ${today}`);
-        
-        // 방문자 수 업데이트
-        const updateVisitors = async () => {
-          const lastVisit = localStorage.getItem('lastVisit');
-          
-          if (lastVisit !== today) {
-            localStorage.setItem('lastVisit', today);
-            
-            // Firebase 데이터 업데이트
-            const updates = {};
-            updates[`/total`] = increment(1);
-            updates[`/daily/${today}`] = increment(1);
-            await update(visitorsRef, updates);
-            
-            // 방문 카운트 증가 로그
-            console.log(`🚀 새로운 방문자! 오늘(${today}) 방문자 수 증가`);
-          } else {
-            console.log(`🔄 오늘(${today}) 이미 방문한 사용자입니다.`);
-          }
-        };
+        const { data, error } = await supabase
+          .from('visitor_stats')
+          .select('*')
+          .eq('date', today)
+          .single();
 
-        // 실시간 방문자 수 리스너
-        const unsubscribe = onValue(visitorsRef, (snapshot) => {
-          const data = snapshot.val() || {};
-          const todayCount = data.daily?.[today] || 0;
-          const totalCount = data.total || 0;
-          
-          setVisitors({
-            today: todayCount,
-            total: totalCount,
-            loading: false
-          });
-          
-          // 첫 로딩 시 방문자 수 콘솔 출력
-          console.log(`📊 방문자 통계 - 오늘: ${todayCount}, 전체: ${totalCount}`);
+        if (error && error.code !== 'PGRST116') { // PGRST116는 데이터가 없는 경우
+          console.error('방문자 통계 조회 실패:', error);
+          return;
+        }
+
+        const todayCount = data?.daily_count || 0;
+        const totalCount = data?.total_count || 0;
+
+        setVisitors({
+          today: todayCount,
+          total: totalCount,
+          loading: false
         });
 
-        updateVisitors();
 
-        return () => {
-          unsubscribe(); // 컴포넌트 언마운트시 리스너 제거
-        };
       } catch (error) {
-        console.error('Firebase 초기화 실패:', error);
+        console.error('방문자 통계 조회 실패:', error);
         setVisitors({
           today: 0,
           total: 0,
@@ -83,10 +47,97 @@ const VisitorCounter = () => {
       }
     };
 
-    initFirebase();
-  }, [isFirebaseConfigured]);
+    fetchVisitorStats();
+  }, []);
 
+  // 방문자 수 증가 (중복 방지)
+  useEffect(() => {
+    if (!visitors.loading && !visitIncremented) {
+      const incrementVisit = async () => {
+        try {
+          const today = new Date().toISOString().split('T')[0];
+          
+          // localStorage와 sessionStorage로 중복 방지
+          const lastVisit = localStorage.getItem('lastVisit');
+          const sessionVisit = sessionStorage.getItem('sessionVisit');
+          
+          if (lastVisit !== today || !sessionVisit) {
+            console.log('🚀 새로운 방문자! 방문자 수 증가 시작');
+            
+            // Supabase 함수 호출로 방문자 수 증가
+            const { error } = await supabase.rpc('increment_visitor_count');
+            
+            if (error) {
+              console.error('❌ 방문자 수 증가 실패:', error);
+              return;
+            }
 
+            console.log('✅ 방문자 수 증가 성공!');
+
+            // 방문 기록 저장
+            localStorage.setItem('lastVisit', today);
+            sessionStorage.setItem('sessionVisit', 'true');
+            console.log('💾 방문 기록 저장 완료');
+
+            // 방문자 수 증가 후 최신 데이터 가져오기
+            const { data: updatedStats, error: fetchError } = await supabase
+              .from('visitor_stats')
+              .select('*')
+              .eq('date', today)
+              .single();
+
+            if (!fetchError && updatedStats) {
+              console.log('📊 업데이트된 방문자 통계:', updatedStats);
+              setVisitors({
+                today: updatedStats.daily_count,
+                total: updatedStats.total_count,
+                loading: false
+              });
+            }
+
+            setVisitIncremented(true);
+            console.log('🎉 방문자 카운팅 완료!');
+          } else {
+            console.log('🔄 이미 방문한 사용자입니다');
+            setVisitIncremented(true);
+          }
+        } catch (error) {
+          console.error('방문자 수 증가 처리 실패:', error);
+          setVisitIncremented(true);
+        }
+      };
+
+      incrementVisit();
+    }
+  }, [visitors.loading, visitIncremented]);
+
+  // 실시간 구독 (선택사항)
+  useEffect(() => {
+    if (!visitors.loading) {
+      const channel = supabase
+        .channel('visitor_stats')
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'visitor_stats'
+          },
+          (payload) => {
+            setVisitors({
+              today: payload.new.daily_count,
+              total: payload.new.total_count,
+              loading: false
+            });
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [visitors.loading]);
 
   if (visitors.loading) {
     return (
@@ -109,12 +160,15 @@ const VisitorCounter = () => {
       <Typography variant="h6" gutterBottom>
         방문자 수
       </Typography>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-        <Typography variant="body1">
-          Today: {visitors.today}
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'center' }}>
+        <Typography variant="h4" color="primary" fontWeight="bold">
+          {visitors.today}
         </Typography>
-        <Typography variant="body1">
-          Total: {visitors.total}
+        <Typography variant="body2" color="text.secondary">
+          오늘
+        </Typography>
+        <Typography variant="h6" color="text.secondary">
+          총 {visitors.total}명
         </Typography>
       </Box>
     </Box>

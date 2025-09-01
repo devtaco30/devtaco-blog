@@ -102,14 +102,21 @@ export const togglePostPublish = async (id, isPublished) => {
 // 조회수 증가
 export const incrementViewCount = async (id) => {
   try {
-    const { data, error } = await supabase
-      .from('posts')
-      .update({ view_count: supabase.rpc('increment') })
-      .eq('id', id)
-      .select();
+    // 조회수 증가
+    const { error: incrementError } = await supabase
+      .rpc('increment_view_count', { post_id: id });
 
-    if (error) throw error;
-    return { data: data[0], error: null };
+    if (incrementError) throw incrementError;
+
+    // 업데이트된 게시글 데이터 가져오기
+    const { data, error: fetchError } = await supabase
+      .from('posts')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (fetchError) throw fetchError;
+    return { data, error: null };
   } catch (error) {
     console.error('Error incrementing view count:', error);
     return { data: null, error };

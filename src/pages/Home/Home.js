@@ -17,34 +17,24 @@ const Home = () => {
   const [featuredPosts, setFeaturedPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // featuredPosts state 변화 추적
-  useEffect(() => {
-    console.log('🔄 featuredPosts state 변경됨:', featuredPosts);
-  }, [featuredPosts]);
+
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        console.log('🔄 Home에서 포스트 가져오기 시작');
         const allPosts = await getAllPosts();
-        console.log('📝 가져온 포스트들:', allPosts);
         
         // Supabase 응답 구조에 맞게 수정
         const posts = allPosts.data || [];
-        console.log('📊 실제 포스트 배열:', posts);
-        console.log('📊 첫 번째 포스트 구조:', posts[0]);
         
         const featured = posts.slice(0, 3);
-        console.log('⭐ 최근 포스트 3개:', featured);
         
-        console.log('🎯 featuredPosts state 업데이트 전:', featured);
         setFeaturedPosts(featured);
-        console.log('✅ setFeaturedPosts 호출 완료');
       } catch (error) {
         console.error('❌ Featured Posts를 불러오는데 실패했습니다:', error);
       } finally {
-        console.log('🔄 loading 상태를 false로 변경');
+
         setLoading(false);
       }
     };

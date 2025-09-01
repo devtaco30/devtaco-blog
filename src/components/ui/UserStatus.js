@@ -5,7 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 const UserStatus = () => {
   const { user, loading, signOut } = useAuth();
 
-  console.log('🔍 UserStatus 렌더링:', { user: user?.email, loading });
+
 
   if (loading) {
     return (
