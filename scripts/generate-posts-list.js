@@ -1,13 +1,11 @@
 const fs = require('fs');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
-// 환경별 환경변수 로드
-if (process.env.NODE_ENV === 'production') {
-  // 운영환경: .env 파일에서 로드
-  require('dotenv').config();
-} else {
-  // 로컬환경: .env.local 파일에서 로드
+// .env.local이 있으면 사용, 없으면 .env 사용
+try {
   require('dotenv').config({ path: '.env.local' });
+} catch (error) {
+  require('dotenv').config();
 }
 
 // Supabase 클라이언트 설정
