@@ -37,7 +37,7 @@ jobs:
         echo "REACT_APP_VERSION=1.0.1" >> .env
 
     - name: Build
-      run: PUBLIC_URL='/devtaco-blog' npm run build
+      run: npm run build
 
     - name: Setup Pages
       uses: actions/configure-pages@v4
