@@ -2,11 +2,24 @@ const fs = require('fs');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 // .env.local이 있으면 사용, 없으면 .env 사용
+console.log('🔍 환경변수 로딩 시작...');
+console.log('📁 현재 디렉토리:', process.cwd());
+console.log('🔍 .env.local 파일 존재 여부:', require('fs').existsSync('.env.local'));
+console.log('🔍 .env 파일 존재 여부:', require('fs').existsSync('.env'));
+
 try {
+  console.log('📂 .env.local 파일 로딩 시도...');
   require('dotenv').config({ path: '.env.local' });
+  console.log('✅ .env.local 파일 로딩 성공');
 } catch (error) {
+  console.log('❌ .env.local 파일 로딩 실패, .env 파일 사용');
   require('dotenv').config();
+  console.log('✅ .env 파일 로딩 완료');
 }
+
+console.log('🔍 로딩된 환경변수:');
+console.log('  REACT_APP_SUPABASE_URL:', process.env.REACT_APP_SUPABASE_URL ? '설정됨' : '설정되지 않음');
+console.log('  REACT_APP_SUPABASE_ANON_KEY:', process.env.REACT_APP_SUPABASE_ANON_KEY ? '설정됨' : '설정되지 않음');
 
 // Supabase 클라이언트 설정
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
