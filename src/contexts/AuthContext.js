@@ -55,16 +55,14 @@ export const AuthProvider = ({ children }) => {
             
             // Supabase 세션 수동 설정
             try {
-              const { data, error } = await supabase.auth.setSession({
-                access_token: accessToken,
-                refresh_token: refreshToken || ''
-              });
-              
-              if (error) {
-                console.error('❌ 세션 설정 실패:', error);
-              } else {
-  
-              }
+                          const { error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken || ''
+            });
+            
+            if (error) {
+              console.error('❌ 세션 설정 실패:', error);
+            }
             } catch (sessionError) {
               console.error('💥 세션 설정 중 오류:', sessionError);
             }
@@ -78,13 +76,7 @@ export const AuthProvider = ({ children }) => {
         await new Promise(resolve => setTimeout(resolve, 500));
         
         // 세션 확인
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('❌ 세션 조회 오류:', error);
-          // 오류 발생 시 세션 초기화
-          await supabase.auth.signOut();
-        }
+        const { data: { session } } = await supabase.auth.getSession();
         
 
         
@@ -141,15 +133,13 @@ export const AuthProvider = ({ children }) => {
 
   const signIn = async (email, password) => {
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
     
     if (error) {
       console.error('❌ 로그인 실패:', error.message);
-    } else {
-
     }
     
     return { error };
@@ -157,7 +147,7 @@ export const AuthProvider = ({ children }) => {
 
   const signUp = async (email, password) => {
 
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
     });
@@ -165,8 +155,6 @@ export const AuthProvider = ({ children }) => {
     if (error) {
       console.error('❌ 회원가입 실패:', error.message);
       console.error('❌ 에러 상세:', error);
-    } else {
-
     }
     
     return { error };
@@ -209,7 +197,7 @@ export const AuthProvider = ({ children }) => {
     }
     
 
-    const { data, error } = await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: 'github',
       options: {
         redirectTo: `${window.location.origin}/devtaco-blog/#/`,
@@ -222,8 +210,6 @@ export const AuthProvider = ({ children }) => {
     
     if (error) {
       console.error('❌ GitHub 로그인 실패:', error.message);
-    } else {
-
     }
     
     return { error };
@@ -234,7 +220,8 @@ export const AuthProvider = ({ children }) => {
 
     
     try {
-      const { data, error } = await supabase.auth.getSession();
+      const { data } = await supabase.auth.getSession();
+      console.log('현재 세션:', data);
       
     } catch (err) {
       console.error('세션 테스트 오류:', err);
