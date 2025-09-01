@@ -12,7 +12,7 @@ import LoginPage from './pages/Auth/LoginPage';
 import Home from './pages/Home';
 import { BlogList, BlogPost } from './pages/Blog';
 import About from './pages/About';
-import TestPage from './pages/Test/TestPage';
+
 import PostManager from './pages/Admin/PostManager';
 
 function AppContent() {
@@ -40,7 +40,7 @@ function AppContent() {
         <Route path="/posts" element={<BlogList />} />
         <Route path="/posts/:id" element={<BlogPost />} />
         <Route path="/about" element={<About />} />
-        <Route path="/test" element={<TestPage />} />
+
         <Route path="/login" element={<LoginPage />} />
         <Route 
           path="/admin/posts" 
