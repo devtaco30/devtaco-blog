@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Grid, Box, IconButton } from '@mui/material';
+import { useLocation } from 'react-router-dom';
 import MenuIcon from '@mui/icons-material/Menu';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import TerminalNavigation from './TerminalNavigation';
 import { useTerminalNavigation } from '../../hooks/useTerminalNavigation';
 import VisitorCounter from '../ui/VisitorCounter';
+import { ROUTES, HASH_ROUTES } from '../../constants/routes';
 
 const Layout = ({ children }) => {
   const { terminalOpen, toggleTerminal, closeTerminal, handleNavigationClick } = useTerminalNavigation();
   const [showShortcut, setShowShortcut] = useState(true);
+  const location = useLocation();
+  
+  // 로그인 페이지에서는 네비게이션 숨김
+  const isLoginPage = location.pathname === ROUTES.LOGIN || location.hash === HASH_ROUTES.LOGIN;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -22,73 +28,73 @@ const Layout = ({ children }) => {
 
   return (
     <div className="App">
-      {/* Top Header Icons */}
-      <Box sx={{
-        position: 'fixed',
-        top: 20,
-        left: 20,
-        right: 20,
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        zIndex: 100
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <IconButton 
-            onClick={toggleTerminal}
-            sx={{
-              color: '#000000',
-              backgroundColor: 'rgba(0, 0, 0, 0.1)',
-              opacity: showShortcut ? 1 : 0.3,
-              transition: 'opacity 0.3s ease',
-              '&:hover': {
-                backgroundColor: 'rgba(0, 0, 0, 0.2)'
-              }
-            }}
-          >
-            <MenuIcon />
-          </IconButton>
-          {showShortcut && (
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 0.2,
-              animation: 'bounce 1.5s infinite',
-              '@keyframes bounce': {
-                '0%, 50%, 100%': {
-                  transform: 'translateY(0)'
-                },
-                '25%, 75%': {
-                  transform: 'translateY(-6px)'
+      {/* Top Header Icons - 로그인 페이지에서는 숨김 */}
+      {!isLoginPage && (
+        <Box sx={{
+          position: 'fixed',
+          top: 20,
+          left: 20,
+          right: 20,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          zIndex: 100
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <IconButton 
+              onClick={toggleTerminal}
+              sx={{
+                color: '#000000',
+                backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                opacity: showShortcut ? 1 : 0.3,
+                transition: 'opacity 0.3s ease',
+                '&:hover': {
+                  backgroundColor: 'rgba(0, 0, 0, 0.2)'
                 }
-              }
-            }}>
-              <ArrowBackIcon sx={{ 
-                fontSize: '2rem', 
-                color: 'rgba(0, 0, 0, 0.6)',
-                alignSelf: 'center'
-              }} />
+              }}
+            >
+              <MenuIcon />
+            </IconButton>
+            {showShortcut && (
               <Box sx={{ 
                 display: 'flex', 
                 alignItems: 'center', 
-                gap: 1,
-                fontSize: '1rem',
-                color: '#666666',
-                fontFamily: '"Courier New", "Consolas", "Monaco", "Menlo", monospace',
-                backgroundColor: 'rgba(0, 0, 0, 0.05)',
-                padding: '6px 10px',
-                borderRadius: '6px',
-                border: '1px solid rgba(0, 0, 0, 0.1)',
-                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+                gap: 0.2,
+                animation: 'bounce 1.5s infinite',
+                '@keyframes bounce': {
+                  '0%, 50%, 100%': {
+                    transform: 'translateY(0)'
+                  },
+                  '25%, 75%': {
+                    transform: 'translateY(-6px)'
+                  }
+                }
               }}>
-                <span>{navigator.platform.includes('Mac') ? '⌘+M' : 'Ctrl+M'}</span>
+                <ArrowBackIcon sx={{ 
+                  fontSize: '2rem', 
+                  color: 'rgba(0, 0, 0, 0.6)',
+                  alignSelf: 'center'
+                }} />
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 1,
+                  fontSize: '1rem',
+                  color: '#666666',
+                  fontFamily: '"Courier New", "Consolas", "Monaco", "Menlo", monospace',
+                  backgroundColor: 'rgba(0, 0, 0, 0.05)',
+                  padding: '6px 10px',
+                  borderRadius: '6px',
+                  border: '1px solid rgba(0, 0, 0, 0.1)',
+                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+                }}>
+                  <span>{navigator.platform.includes('Mac') ? '⌘+M' : 'Ctrl+M'}</span>
+                </Box>
               </Box>
-            </Box>
-          )}
+            )}
+          </Box>
         </Box>
-        
-
-      </Box>
+      )}
 
       <Container 
         maxWidth="xl"

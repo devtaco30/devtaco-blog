@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
-import { getAllPosts } from '../../utils/markdown';
+import { getAllPosts } from '../../services/posts';
 
 const BlogList = () => {
   const [posts, setPosts] = useState([]);
@@ -29,15 +29,20 @@ const BlogList = () => {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const allPosts = await getAllPosts();
-        setPosts(allPosts);
-        setFilteredPosts(allPosts);
+        const { data, error } = await getAllPosts();
+        if (error) throw error;
+        
+        // 발행된 포스트만 필터링
+        const publishedPosts = data.filter(post => post.is_published);
+        
+        setPosts(publishedPosts);
+        setFilteredPosts(publishedPosts);
         
         // 모든 태그 수집
         const tags = new Set();
-        allPosts.forEach(post => {
-          if (post.frontmatter.tags) {
-            post.frontmatter.tags.forEach(tag => tags.add(tag));
+        publishedPosts.forEach(post => {
+          if (post.tags && Array.isArray(post.tags)) {
+            post.tags.forEach(tag => tags.add(tag));
           }
         });
         setAllTags(Array.from(tags).sort());
@@ -51,8 +56,6 @@ const BlogList = () => {
     fetchPosts();
   }, []);
 
-
-
   // 태그 필터링 + 검색어 필터링 조합
   useEffect(() => {
     // 검색어로 게시글 필터링
@@ -60,9 +63,11 @@ const BlogList = () => {
       if (!searchKeyword.trim()) return true;
       
       const searchLower = searchKeyword.toLowerCase();
+      const excerpt = Array.isArray(post.excerpt) ? post.excerpt.join(' ') : post.excerpt || '';
+      
       return (
-        post.frontmatter.title.toLowerCase().includes(searchLower) ||
-        post.frontmatter.excerpt.toLowerCase().includes(searchLower) ||
+        post.title.toLowerCase().includes(searchLower) ||
+        excerpt.toLowerCase().includes(searchLower) ||
         post.content.toLowerCase().includes(searchLower)
       );
     });
@@ -70,8 +75,8 @@ const BlogList = () => {
     // 태그 필터링
     if (selectedTags.length > 0) {
       filtered = filtered.filter(post => 
-        post.frontmatter.tags && 
-        selectedTags.some(tag => post.frontmatter.tags.includes(tag))
+        post.tags && Array.isArray(post.tags) &&
+        selectedTags.some(tag => post.tags.includes(tag))
       );
     }
     
@@ -100,253 +105,195 @@ const BlogList = () => {
     setIsSearchModalOpen(false);
   };
 
-  const handleSearchKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      setSearchKeyword(searchTerm);
-      setIsSearchModalOpen(false);
-    }
+  const handlePostClick = (post) => {
+    navigate(`/posts/${post.id}`);
   };
 
-  const handleSearchInputChange = (e) => {
-    setSearchTerm(e.target.value);
+  // 날짜 포맷팅
+  const formatDate = (timestamp) => {
+    if (!timestamp) return '';
+    
+    console.log('formatDate 호출됨:', { timestamp, type: typeof timestamp });
+    
+    // bigint 타입의 epoch milliseconds를 처리
+    let date;
+    if (typeof timestamp === 'bigint' || typeof timestamp === 'number') {
+      date = new Date(Number(timestamp));
+    } else {
+      date = new Date(timestamp);
+    }
+    
+    console.log('변환된 날짜:', date);
+    
+    const result = date.toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    
+    console.log('최종 결과:', result);
+    return result;
   };
 
   if (loading) {
     return (
-      <Box sx={{ maxWidth: 960, mx: 'auto', p: 3 }}>
-        <Skeleton variant="text" width={200} height={40} sx={{ mb: 3 }} />
-        <Skeleton variant="rectangular" width="100%" height={2} sx={{ mb: 4 }} />
-        
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Box sx={{ p: { xs: 2, md: 4 } }}>
+        <Typography variant="h4" sx={{ mb: 4 }}>
+          게시글 목록
+        </Typography>
+        <Box sx={{ display: 'grid', gap: 3 }}>
           {[1, 2, 3].map((item) => (
-            <Box key={item}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Skeleton variant="text" width="70%" height={24} />
-                <Skeleton variant="text" width={100} height={20} />
+            <Paper key={item} elevation={1} sx={{ p: 3 }}>
+              <Skeleton variant="text" width="60%" height={32} sx={{ mb: 2 }} />
+              <Skeleton variant="text" width="100%" height={20} sx={{ mb: 1 }} />
+              <Skeleton variant="text" width="80%" height={20} sx={{ mb: 2 }} />
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Skeleton variant="rectangular" width={60} height={24} sx={{ borderRadius: 1 }} />
+                <Skeleton variant="rectangular" width={80} height={24} sx={{ borderRadius: 1 }} />
               </Box>
-              <Skeleton variant="text" width="90%" height={20} />
-            </Box>
+            </Paper>
           ))}
         </Box>
       </Box>
     );
   }
 
-    return (
-    <Box sx={{ maxWidth: 960, mx: 'auto', p: 3, pt: { xs: 7, md: 8 } }}>
-      {/* 헤더 */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Box>
-          <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#000000' }}>
-            Posts
-          </Typography>
-          <Box sx={{ height: 2, backgroundColor: '#000000', mt: 1 }} />
-        </Box>
+  return (
+    <Box sx={{ p: { xs: 2, md: 4 } }}>
+      <Typography variant="h4" sx={{ mb: 4 }}>
+        게시글 목록 ({filteredPosts.length}개)
+      </Typography>
+
+      {/* 검색 및 필터 */}
+      <Box sx={{ mb: 4, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+        <TextField
+          placeholder="게시글 검색..."
+          value={searchKeyword}
+          onChange={(e) => setSearchKeyword(e.target.value)}
+          size="small"
+          sx={{ minWidth: 200 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+          }}
+        />
         
-        {/* 검색 버튼 */}
-        <IconButton
+        <IconButton 
           onClick={handleSearchModalOpen}
-          sx={{
-            color: '#000000',
-            border: '1px solid #000000',
-            '&:hover': {
-              backgroundColor: '#f5f5f5'
-            }
+          sx={{ 
+            border: '1px solid #ddd',
+            '&:hover': { backgroundColor: '#f5f5f5' }
           }}
         >
           <SearchIcon />
         </IconButton>
+
+        {selectedTags.length > 0 && (
+          <Chip 
+            label={`선택된 태그: ${selectedTags.length}개`}
+            onDelete={() => setSelectedTags([])}
+            color="primary"
+            variant="outlined"
+          />
+        )}
       </Box>
-      
-      {/* 선택된 태그 및 검색어 표시 */}
-      {(selectedTags.length > 0 || searchKeyword) && (
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="body2" sx={{ mb: 1, color: 'rgba(0, 0, 0, 0.6)' }}>
-            Filtered by: {[
-              ...(searchKeyword ? [`"${searchKeyword}"`] : []),
-              ...selectedTags
-            ].join(', ')}
-          </Typography>
-          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-            {searchKeyword && (
-              <Chip
-                label={`"${searchKeyword}"`}
-                onDelete={() => setSearchKeyword('')}
-                sx={{
-                  backgroundColor: '#000000',
-                  color: '#ffffff',
-                  '& .MuiChip-deleteIcon': {
-                    color: '#ffffff'
-                  }
-                }}
-              />
-            )}
-            {selectedTags.map((tag) => (
-              <Chip
-                key={tag}
-                label={tag}
-                onDelete={() => handleTagClick(tag)}
-                sx={{
-                  backgroundColor: '#000000',
-                  color: '#ffffff',
-                  '& .MuiChip-deleteIcon': {
-                    color: '#ffffff'
-                  }
-                }}
-              />
-            ))}
-          </Stack>
-        </Box>
-      )}
-      
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {filteredPosts.map((post, index) => (
-          <React.Fragment key={post.slug}>
-            <Box 
-              sx={{ 
-                cursor: 'pointer'
-              }}
-              onClick={() => navigate(`/posts/${post.id}`)}
-            >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', mb: 1 }}>
-                <Typography 
-                  variant="h6" 
-                  sx={{ 
-                    fontWeight: 'bold',
-                    fontSize: '1.3rem',
-                    color: '#000000',
-                    flex: 1,
-                    mr: 3,
-                    textDecoration: 'underline',
-                    textUnderlineOffset: '0.2em'
+
+      {/* 게시글 목록 */}
+      <Box sx={{ display: 'grid', gap: 3 }}>
+        {filteredPosts.map((post) => (
+          <Paper 
+            key={post.id} 
+            elevation={1} 
+            sx={{ 
+              p: 3, 
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              '&:hover': {
+                elevation: 3,
+                transform: 'translateY(-2px)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+              }
+            }}
+            onClick={() => handlePostClick(post)}
+          >
+            <Typography variant="h5" sx={{ mb: 2, fontWeight: 'bold' }}>
+              {post.title}
+            </Typography>
+            
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 2, lineHeight: 1.6 }}>
+              {Array.isArray(post.excerpt) && post.excerpt.length > 0 
+                ? post.excerpt.filter(item => item.trim()).join(' | ')
+                : post.content.substring(0, 150) + '...'
+              }
+            </Typography>
+            
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+              {post.tags && Array.isArray(post.tags) && post.tags.map((tag, index) => (
+                <Chip 
+                  key={index} 
+                  label={tag} 
+                  size="small" 
+                  variant="outlined"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleTagClick(tag);
                   }}
-                >
-                  {post.frontmatter.title}
-                </Typography>
-                <Typography 
-                  variant="body2" 
-                  color="rgba(0, 0, 0, 0.6)"
-                  sx={{ 
-                    fontSize: '0.9rem',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  {new Date(post.frontmatter.date).toLocaleDateString('en-GB', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric'
-                  })}
-                </Typography>
-              </Box>
-              
-              {Array.isArray(post.frontmatter.excerpt) ? (
-                post.frontmatter.excerpt.map((line, index) => (
-                  <Typography
-                    key={index}
-                    variant="body1"
-                    sx={{ 
-                      color: 'rgba(0, 0, 0, 0.8)',
-                      lineHeight: 1.6,
-                      fontSize: '1rem',
-                      mb: index === 0 ? 0 : 0.5
-                    }}
-                  >
-                    {line}
-                  </Typography>
-                ))
-              ) : (
-                <Typography 
-                  variant="body1" 
-                  sx={{ 
-                    color: 'rgba(0, 0, 0, 0.8)',
-                    lineHeight: 1.6,
-                    fontSize: '1rem'
-                  }}
-                >
-                  {post.frontmatter.excerpt}
-                </Typography>
-              )}
+                />
+              ))}
             </Box>
-            {index < posts.length - 1 && (
-              <Box sx={{ height: 1.5, width: '97%', alignSelf: 'center', backgroundColor: 'rgba(0, 0, 0, 0.3)', my: 1 }} />
-            )}
-          </React.Fragment>
+            
+            <Typography variant="caption" color="text.secondary">
+              {formatDate(post.published_at)} | 조회수: {post.view_count || 0}
+            </Typography>
+          </Paper>
         ))}
       </Box>
-      
-      {filteredPosts.length === 0 && (
-        <Typography variant="h6" color="rgba(0, 0, 0, 0.6)" sx={{ textAlign: 'center', mt: 4 }}>
-          {selectedTags.length > 0 || searchKeyword 
-            ? `No posts found with "${searchKeyword}" and selected tags.` 
-            : '아직 게시글이 없습니다.'
-          }
-        </Typography>
-      )}
 
       {/* 검색 모달 */}
       <Modal
         open={isSearchModalOpen}
         onClose={handleSearchModalClose}
-        sx={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          justifyContent: 'center',
-          pt: 10
-        }}
+        aria-labelledby="search-modal-title"
       >
-        <Paper
-          sx={{
-            width: 400,
-            maxHeight: 500,
-            p: 3,
-            outline: 'none',
-            position: 'relative'
-          }}
-        >
-          <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>
-            Search & Filter
+        <Box sx={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 400,
+          bgcolor: 'background.paper',
+          borderRadius: 2,
+          boxShadow: 24,
+          p: 4,
+        }}>
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            태그 검색
           </Typography>
           
-          {/* 검색창 */}
           <TextField
             fullWidth
-            placeholder="Search tags or press Enter to search posts..."
+            placeholder="태그 검색..."
             value={searchTerm}
-            onChange={handleSearchInputChange}
-            onKeyPress={handleSearchKeyPress}
-            sx={{ mb: 3 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            sx={{ mb: 2 }}
           />
-
-          {/* 태그 목록 */}
-          <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
-            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-              {filteredTags.map((tag) => (
-                <Chip
-                  key={tag}
-                  label={tag}
-                  onClick={() => handleTagClick(tag)}
-                  sx={{
-                    backgroundColor: selectedTags.includes(tag) ? '#000000' : '#ffffff',
-                    color: selectedTags.includes(tag) ? '#ffffff' : '#000000',
-                    border: '1px solid #000000',
-                    cursor: 'pointer',
-                    mb: 1,
-                    '&:hover': {
-                      backgroundColor: selectedTags.includes(tag) ? '#333333' : '#f5f5f5'
-                    }
-                  }}
-                />
-              ))}
-            </Stack>
-          </Box>
-        </Paper>
+          
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+            {filteredTags.map((tag) => (
+              <Chip
+                key={tag}
+                label={tag}
+                onClick={() => handleTagClick(tag)}
+                color={selectedTags.includes(tag) ? 'primary' : 'default'}
+                variant={selectedTags.includes(tag) ? 'filled' : 'outlined'}
+                sx={{ mb: 1 }}
+              />
+            ))}
+          </Stack>
+        </Box>
       </Modal>
     </Box>
   );

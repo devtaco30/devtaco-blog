@@ -31,6 +31,7 @@ export const useTerminalNavigation = () => {
           navigate('/posts');
           setTerminalOpen(false);
           break;
+
         case 'g':
           window.open('https://github.com/devtaco30', '_blank');
           setTerminalOpen(false);
@@ -75,6 +76,7 @@ export const useTerminalNavigation = () => {
         navigate('/posts');
         setTerminalOpen(false);
         break;
+
       case 'github':
         window.open('https://github.com/devtaco30', '_blank');
         setTerminalOpen(false);

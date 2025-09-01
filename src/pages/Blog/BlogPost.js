@@ -13,7 +13,7 @@ import {
   Paper
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { getPostById } from '../../utils/markdown';
+import { getPostById } from '../../services/posts';
 
 const BlogPost = () => {
   const { id } = useParams();
@@ -23,8 +23,9 @@ const BlogPost = () => {
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        const postData = await getPostById(id);
-        setPost(postData);
+        const { data, error } = await getPostById(id);
+        if (error) throw error;
+        setPost(data);
       } catch (error) {
         console.error('게시글을 불러오는데 실패했습니다:', error);
       } finally {
@@ -101,81 +102,67 @@ const BlogPost = () => {
     );
   }
 
+  // 날짜 포맷팅
+  const formatDate = (timestamp) => {
+    if (!timestamp) return '';
+    
+    // bigint 타입의 epoch milliseconds를 처리
+    let date;
+    if (typeof timestamp === 'bigint' || typeof timestamp === 'number') {
+      date = new Date(Number(timestamp));
+    } else {
+      date = new Date(timestamp);
+    }
+    
+    return date.toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   return (
-    <Box sx={{ maxWidth: '80%', mx: 'auto', p: { xs: 2, md: 3 }, pt: { xs: 5, md: 6 } }}>
+    <Box sx={{ p: { xs: 2, md: 4 } }}>
       {/* Breadcrumbs */}
-      <Breadcrumbs sx={{ mb: 1 }}>
-        <Link 
-          component={RouterLink} 
-          to="/"
-          sx={{ 
-            textDecoration: 'none',
-            color: 'rgba(0, 0, 0, 0.6)',
-            '&:hover': { color: '#000000' }
-          }}
-        >
-          Home
-        </Link>
+      <Breadcrumbs sx={{ mb: 3 }}>
         <Link 
           component={RouterLink} 
           to="/posts"
           sx={{ 
             textDecoration: 'none',
-            color: 'rgba(0, 0, 0, 0.6)',
-            '&:hover': { color: '#000000' }
+            color: 'text.secondary',
+            '&:hover': { textDecoration: 'underline' }
           }}
         >
-          Posts
+          게시글 목록
         </Link>
-        <Typography color="#000000">{post.frontmatter.title}</Typography>
+        <Typography color="text.primary">{post.title}</Typography>
       </Breadcrumbs>
 
       {/* 게시글 헤더 */}
-      <Paper elevation={1} sx={{ p: { xs: 1.5, md: 2 }, mb: 2 }}>
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
-          {post.frontmatter.title}
+      <Paper elevation={1} sx={{ p: 3, mb: 4 }}>
+        <Typography variant="h3" sx={{ mb: 2, fontWeight: 'bold' }}>
+          {post.title}
         </Typography>
         
-        <Typography 
-          variant="body1" 
-          color="rgba(0, 0, 0, 0.6)" 
-          sx={{ mb: 1 }}
-        >
-          📅 {new Date(post.frontmatter.date).toLocaleDateString('ko-KR')}
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 3, lineHeight: 1.6 }}>
+          {Array.isArray(post.excerpt) && post.excerpt.length > 0 
+            ? post.excerpt.filter(item => item.trim()).join(' | ')
+            : ''
+          }
         </Typography>
         
-        {Array.isArray(post.frontmatter.excerpt) ? (
-          post.frontmatter.excerpt.map((line, index) => (
-            <Typography
-              key={index}
-              variant="body1"
-              sx={{
-                mb: index === 0 ? 1 : 0.5,
-                fontSize: '1.1rem'
-              }}
-            >
-              {line}
-            </Typography>
-          ))
-        ) : (
-          <Typography variant="body1" sx={{ mb: 1, fontSize: '1.1rem' }}>
-             {post.frontmatter.excerpt}
-          </Typography>
-        )}
-        
-        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-          {post.frontmatter.tags?.map((tag) => (
-            <Chip 
-              key={tag} 
-              label={tag} 
-              sx={{
-                backgroundColor: '#ffffff',
-                color: '#000000',
-                border: '1px solid #000000'
-              }}
-            />
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+          {post.tags && Array.isArray(post.tags) && post.tags.map((tag, index) => (
+            <Chip key={index} label={tag} size="small" variant="outlined" />
           ))}
         </Box>
+        
+        <Typography variant="body2" color="text.secondary">
+          {formatDate(post.published_at)} | 조회수: {post.view_count || 0}
+        </Typography>
       </Paper>
 
       {/* 게시글 내용 */}
@@ -246,29 +233,6 @@ const BlogPost = () => {
             },
             '& th': {
               backgroundColor: '#2c3e50',
-              color: '#ffffff',
-              fontWeight: '600',
-              fontSize: '1rem',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px'
-            },
-            '& tr:nth-child(even)': {
-              backgroundColor: '#f8f9fa'
-            },
-            '& tr:nth-child(odd)': {
-              backgroundColor: '#ffffff'
-            },
-            '& tr:hover': {
-              backgroundColor: '#e3f2fd',
-              transform: 'translateY(-1px)',
-              transition: 'all 0.2s ease'
-            },
-            '& td:first-child': {
-              fontWeight: '600',
-              color: '#2c3e50'
-            },
-            '& td:nth-child(4)': {
-              fontWeight: '600',
               color: '#e74c3c'
             }
           }}
@@ -283,7 +247,7 @@ const BlogPost = () => {
                   return (
                     <img 
                       {...props} 
-                      src={`${process.env.PUBLIC_URL}${props.src}`}
+                      src={props.src}
                       alt={props.alt || 'Blog post image'}
                     />
                   );
@@ -292,7 +256,7 @@ const BlogPost = () => {
                 return (
                   <img 
                     {...props} 
-                    src={`${process.env.PUBLIC_URL}${props.src}`}
+                    src={props.src}
                     alt={props.alt || 'Blog post image'}
                     style={{ 
                       maxWidth: '60%', 

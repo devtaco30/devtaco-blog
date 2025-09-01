@@ -51,5 +51,21 @@
       "Performance"
     ],
     "excerpt": "Spring Boot와 Quarkus의 성능, 기능, 사용법을 비교해보고 어떤 상황에서 어떤 프레임워크를 선택해야 하는지 알아봅니다."
+  },
+  {
+    "id": "4",
+    "slug": "web3-decentralized-future",
+    "filename": "web3-decentralized-future.md",
+    "title": "Web3.0: 탈중앙화로 개인이 주권을 갖는 참여형 웹의 미래",
+    "date": "2025-08-23",
+    "tags": [
+      "Web3.0",
+      "Blockchain",
+      "Decentralization",
+      "Technology",
+      "Future",
+      "Backend"
+    ],
+    "excerpt": "Web1.0의 정적 웹부터 Web2.0의 소셜 웹을 거쳐 Web3.0의 탈중앙화 웹까지, 인터넷의 진화 과정과 개인이 주권을 갖는 참여형 웹의 미래를 살펴봅니다."
   }
 ]

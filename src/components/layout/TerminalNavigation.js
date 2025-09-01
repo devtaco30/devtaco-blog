@@ -78,6 +78,7 @@ const TerminalNavigation = ({ terminalOpen, closeTerminal, handleNavigationClick
             >
               3 → posts
             </Typography>
+
           </Box>
         </Box>
         
