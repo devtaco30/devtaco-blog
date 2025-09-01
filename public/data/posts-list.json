@@ -1,10 +1,61 @@
 [
   {
-    "id": "3",
-    "slug": "cursor-ai-pair-programming-review",
-    "filename": "cursor-ai-pair-programming-review.md",
+    "id": 2,
+    "slug": "post-2",
+    "title": "왜 금융에서는 부동소수점 오류를 예방해야만 하는가?",
+    "date": "2024-08-20",
+    "tags": [
+      "Java",
+      "Kotlin",
+      "Backend",
+      "Finance",
+      "Floating Point",
+      "Precision",
+      "BigDecimal"
+    ],
+    "excerpt": [
+      "금융 시스템에서 부동소수점 연산의 위험성과 정확한 계산을 위한 해결 방법을 알아봅니다.",
+      "Backend 개발자를 위한 실무 가이드입니다."
+    ]
+  },
+  {
+    "id": 1,
+    "slug": "post-1",
+    "title": "압도적인 퍼포먼스, Quarkus, 과연 Spring Boot의 대안이 될까?",
+    "date": "2024-08-19",
+    "tags": [
+      "Spring Boot",
+      "Quarkus",
+      "Java",
+      "Framework",
+      "Performance"
+    ],
+    "excerpt": [
+      "Spring Boot와 Quarkus의 성능, 기능, 사용법을 비교해보고 어떤 상황에서 어떤 프레임워크를 선택해야 하는지 알아봅니다."
+    ]
+  },
+  {
+    "id": 6,
+    "slug": "post-6",
+    "title": "Web3.0: 탈중앙화로 개인이 주권을 갖는 참여형 웹의 미래",
+    "date": "2024-08-19",
+    "tags": [
+      "Web3.0",
+      "Blockchain",
+      "Decentralization",
+      "Technology",
+      "Future",
+      "Backend"
+    ],
+    "excerpt": [
+      "Web1.0의 정적 웹부터 Web2.0의 소셜 웹을 거쳐 Web3.0의 탈중앙화 웹까지, 인터넷의 진화 과정과 개인이 주권을 갖는 참여형 웹의 미래를 살펴봅니다."
+    ]
+  },
+  {
+    "id": 5,
+    "slug": "post-5",
     "title": "Cursor AI와 함께하는 페어 프로그래밍: Backend 개발자의 생산성 혁신",
-    "date": "2025-08-22",
+    "date": "2024-08-18",
     "tags": [
       "Cursor AI",
       "AI Coding",
@@ -19,53 +70,5 @@
       "Cursor AI와 함께 최근 8개월간 페어 프로그래밍을 진행한 Backend 개발자의 생생한 후기!!",
       "AI 코딩 어시스턴트의 장단점과 실무 적용 팁을 공유합니다."
     ]
-  },
-  {
-    "id": "2",
-    "slug": "floating-point-finance",
-    "filename": "floating-point-finance.md",
-    "title": "왜 금융에서는 부동소수점 오류를 예방해야만 하는가?",
-    "date": "2025-08-20",
-    "tags": [
-      "Java",
-      "Kotlin",
-      "Backend",
-      "Finance",
-      "Floating Point",
-      "Precision",
-      "BigDecimal"
-    ],
-    "excerpt": "금융 시스템에서 부동소수점 연산의 위험성과 정확한 계산을 위한 해결 방법을 알아봅니다. Backend 개발자를 위한 실무 가이드입니다."
-  },
-  {
-    "id": "1",
-    "slug": "spring-boot-vs-quarkus",
-    "filename": "spring-boot-vs-quarkus.md",
-    "title": "압도적인 퍼포먼스, Quarkus, 과연 Spring Boot의 대안이 될까?",
-    "date": "2025-08-19",
-    "tags": [
-      "Spring Boot",
-      "Quarkus",
-      "Java",
-      "Framework",
-      "Performance"
-    ],
-    "excerpt": "Spring Boot와 Quarkus의 성능, 기능, 사용법을 비교해보고 어떤 상황에서 어떤 프레임워크를 선택해야 하는지 알아봅니다."
-  },
-  {
-    "id": "4",
-    "slug": "web3-decentralized-future",
-    "filename": "web3-decentralized-future.md",
-    "title": "Web3.0: 탈중앙화로 개인이 주권을 갖는 참여형 웹의 미래",
-    "date": "2025-08-23",
-    "tags": [
-      "Web3.0",
-      "Blockchain",
-      "Decentralization",
-      "Technology",
-      "Future",
-      "Backend"
-    ],
-    "excerpt": "Web1.0의 정적 웹부터 Web2.0의 소셜 웹을 거쳐 Web3.0의 탈중앙화 웹까지, 인터넷의 진화 과정과 개인이 주권을 갖는 참여형 웹의 미래를 살펴봅니다."
   }
 ]

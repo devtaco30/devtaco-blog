@@ -1,59 +1,69 @@
 const fs = require('fs');
 const path = require('path');
-const matter = require('gray-matter');
+const { createClient } = require('@supabase/supabase-js');
+require('dotenv').config({ path: '.env.local' });
 
-// 디렉토리 경로
-const postsDir = path.join(__dirname, '../public/posts');
+// Supabase 클라이언트 설정
+const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('❌ Supabase 환경변수가 설정되지 않았습니다!');
+  console.error('REACT_APP_SUPABASE_URL:', supabaseUrl);
+  console.error('REACT_APP_SUPABASE_ANON_KEY:', supabaseKey);
+  process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// 출력 파일 경로
 const outputFile = path.join(__dirname, '../public/data/posts-list.json');
 const sitemapFile = path.join(__dirname, '../public/sitemap.xml');
 
 // 현재 날짜
 const currentDate = new Date().toISOString().split('T')[0];
 
-try {
-  // posts 디렉토리 확인
-  if (!fs.existsSync(postsDir)) {
-    console.error('posts 디렉토리가 존재하지 않습니다:', postsDir);
-    process.exit(1);
-  }
-
-  // .md 파일들 읽기
-  const files = fs.readdirSync(postsDir).filter(file => file.endsWith('.md'));
-  
-  if (files.length === 0) {
-    console.warn('posts 디렉토리에 .md 파일이 없습니다.');
-  }
-
-  // 포스트 정보 추출
-  const postsList = [];
-  const sitemapUrls = [];
-
-  files.forEach(file => {
-    const filePath = path.join(postsDir, file);
-    const content = fs.readFileSync(filePath, 'utf8');
-    const { data } = matter(content);
+async function generatePostsList() {
+  try {
+    console.log('🔄 Supabase에서 포스트 정보를 가져오는 중...');
     
-    const slug = file.replace('.md', '');
-    const lastmod = data.date || currentDate;
-    
-    postsList.push({
-      id: data.id,
-      slug: slug,
-      filename: file,
-      title: data.title,
-      date: data.date,
-      tags: data.tags || [],
-      excerpt: data.excerpt
-    });
+    // Supabase에서 published된 포스트들 가져오기
+    const { data: posts, error } = await supabase
+      .from('posts')
+      .select('id, title, content, tags, excerpt, published_at, updated_at')
+      .eq('is_published', true)
+      .order('published_at', { ascending: false });
 
-    // sitemap용 URL 추가
-    sitemapUrls.push({
-      loc: `https://devtaco30.github.io/devtaco-blog/#/posts/${data.id}`,
-      lastmod: lastmod,
-      changefreq: 'monthly',
-      priority: '0.7'
+    if (error) {
+      throw error;
+    }
+
+    console.log(`📝 Supabase에서 ${posts.length}개의 포스트를 가져왔습니다.`);
+
+    // 포스트 정보 변환
+    const postsList = [];
+    const sitemapUrls = [];
+
+    posts.forEach(post => {
+      const publishedDate = post.published_at ? new Date(Number(post.published_at)).toISOString().split('T')[0] : currentDate;
+      
+      postsList.push({
+        id: post.id,
+        slug: `post-${post.id}`,
+        title: post.title,
+        date: publishedDate,
+        tags: post.tags || [],
+        excerpt: post.excerpt || []
+      });
+
+      // sitemap용 URL 추가
+      sitemapUrls.push({
+        loc: `https://devtaco30.github.io/devtaco-blog/#/posts/${post.id}`,
+        lastmod: publishedDate,
+        changefreq: 'monthly',
+        priority: '0.7'
+      });
     });
-  });
 
   // public/data 디렉토리 생성
   const dataDir = path.dirname(outputFile);
@@ -75,13 +85,17 @@ try {
   console.log(`📝 게시글 개수: ${postsList.length}개`);
   console.log(`📋 게시글 목록:`);
   postsList.forEach(post => {
-    console.log(`   - ${post.slug} (${post.filename}) - ${post.date}`);
+    console.log(`   - ${post.slug} - ${post.date}`);
   });
 
-} catch (error) {
-  console.error('❌ 스크립트 실행 중 오류 발생:', error);
-  process.exit(1);
+  } catch (error) {
+    console.error('❌ Supabase에서 포스트를 가져오는 중 오류 발생:', error);
+    process.exit(1);
+  }
 }
+
+// 메인 함수 실행
+generatePostsList();
 
 function generateSitemap(posts) {
   const baseUrls = [
