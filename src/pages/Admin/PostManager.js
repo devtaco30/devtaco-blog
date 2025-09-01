@@ -318,7 +318,7 @@ const PostManager = () => {
 
   // 이미지 크기 조절을 위한 HTML 태그 생성
   const createImageWithSize = (url, width = 'auto', height = 'auto') => {
-    return `<img src="${url}" alt="이미지" style="width: ${width}; height: ${height}; max-width: 100%;" />`;
+    return `<img src="${url}" alt="이미지" style="width: ${width}; max-width: 100%; object-fit: contain;" />`;
   };
 
   // 이미지 크기 조절 다이얼로그
