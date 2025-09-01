@@ -161,7 +161,7 @@ const BlogList = () => {
   return (
     <Box sx={{ p: { xs: 2, md: 4 } }}>
       <Typography variant="h4" sx={{ mb: 4 }}>
-        게시글 목록 ({filteredPosts.length}개)
+        우아하고 싶은 포스트
       </Typography>
 
       {/* 검색 및 필터 */}

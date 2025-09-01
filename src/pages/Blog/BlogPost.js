@@ -174,7 +174,7 @@ const BlogPost = () => {
 
       {/* 게시글 헤더 */}
       <Paper elevation={1} sx={{ p: 3, mb: 4 }}>
-        <Typography variant="h3" sx={{ mb: 2, fontWeight: 'bold' }}>
+        <Typography variant="h4" sx={{ mb: 2, fontWeight: 'bold' }}>
           {post.title}
         </Typography>
         

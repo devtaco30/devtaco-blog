@@ -97,16 +97,24 @@ const Layout = ({ children }) => {
       )}
 
       <Container 
-        maxWidth="xl"
+        maxWidth={false}
         sx={{
-          px: { xs: 1, sm: 2, md: 4 },
+          maxWidth: {
+            xs: '95%',    // 모바일: 95%
+            sm: '90%',    // 작은 화면: 90%
+            md: '85%',    // 중간 화면: 85%
+            lg: '80%',    // 큰 화면: 80%
+            xl: '75%'     // 매우 큰 화면: 75%
+          },
+          mx: 'auto',     // 중앙 정렬
+          px: 0           // 좌우 패딩 제거하여 여백 균등화
         }}
       >
         <Grid 
           container 
           spacing={{ xs: 2, md: 3 }}
           sx={{
-            maxWidth: '1800px',
+            maxWidth: '100%',  // Grid는 Container 내에서 전체 너비 사용
             margin: '0 auto',
             justifyContent: 'center'
           }}
