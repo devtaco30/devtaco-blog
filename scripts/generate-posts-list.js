@@ -7,12 +7,12 @@ console.log('📁 현재 디렉토리:', process.cwd());
 console.log('🔍 .env.local 파일 존재 여부:', require('fs').existsSync('.env.local'));
 console.log('🔍 .env 파일 존재 여부:', require('fs').existsSync('.env'));
 
-try {
-  console.log('📂 .env.local 파일 로딩 시도...');
+if (require('fs').existsSync('.env.local')) {
+  console.log('📂 .env.local 파일 로딩...');
   require('dotenv').config({ path: '.env.local' });
-  console.log('✅ .env.local 파일 로딩 성공');
-} catch (error) {
-  console.log('❌ .env.local 파일 로딩 실패, .env 파일 사용');
+  console.log('✅ .env.local 파일 로딩 완료');
+} else {
+  console.log('📂 .env.local 파일 없음, .env 파일 사용');
   require('dotenv').config();
   console.log('✅ .env 파일 로딩 완료');
 }
