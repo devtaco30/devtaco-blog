@@ -14,12 +14,38 @@ import {
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { getPostById, incrementViewCount } from '../../services/posts';
+import ImageModal from '../../components/ui/ImageModal';
 
 const BlogPost = () => {
   const { id } = useParams();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [viewCountIncremented, setViewCountIncremented] = useState(false);
+  
+  // 이미지 모달 상태
+  const [imageModal, setImageModal] = useState({
+    open: false,
+    src: '',
+    alt: ''
+  });
+
+  // 이미지 모달 열기
+  const handleImageClick = (src, alt) => {
+    setImageModal({
+      open: true,
+      src,
+      alt
+    });
+  };
+
+  // 이미지 모달 닫기
+  const handleImageModalClose = () => {
+    setImageModal({
+      open: false,
+      src: '',
+      alt: ''
+    });
+  };
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -280,6 +306,13 @@ const BlogPost = () => {
                       {...props} 
                       src={props.src}
                       alt={props.alt || 'Blog post image'}
+                      onClick={() => handleImageClick(props.src, props.alt)}
+                                          style={{
+                      cursor: 'pointer',
+                      transition: 'opacity 0.2s ease-in-out'
+                    }}
+                    onMouseEnter={(e) => e.target.style.opacity = '0.8'}
+                    onMouseLeave={(e) => e.target.style.opacity = '1'}
                     />
                   );
                 }
@@ -289,12 +322,17 @@ const BlogPost = () => {
                     {...props} 
                     src={props.src}
                     alt={props.alt || 'Blog post image'}
+                    onClick={() => handleImageClick(props.src, props.alt)}
                     style={{ 
                       maxWidth: '60%', 
                       height: 'auto',
                       display: 'block',
-                      margin: '20px auto'
+                      margin: '20px auto',
+                      cursor: 'pointer',
+                      transition: 'opacity 0.2s ease-in-out'
                     }}
+                    onMouseEnter={(e) => e.target.style.opacity = '0.8'}
+                    onMouseLeave={(e) => e.target.style.opacity = '1'}
                   />
                 );
               }
@@ -326,6 +364,14 @@ const BlogPost = () => {
           게시글 목록으로 돌아가기
         </Link>
       </Box>
+
+      {/* 이미지 모달 */}
+      <ImageModal
+        open={imageModal.open}
+        onClose={handleImageModalClose}
+        src={imageModal.src}
+        alt={imageModal.alt}
+      />
     </Box>
   );
 };
