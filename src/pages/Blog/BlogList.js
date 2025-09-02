@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Box, 
   Typography, 
@@ -9,11 +9,12 @@ import {
   InputAdornment,
   IconButton,
   Modal,
-  Paper
+  Paper,
+  CircularProgress
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
-import { getAllPosts } from '../../services/posts';
+import { getAllPosts, getPostsWithPagination, searchPostsWithPagination } from '../../services/posts';
 
 const BlogList = () => {
   const [posts, setPosts] = useState([]);
@@ -24,28 +25,59 @@ const BlogList = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [lastCreatedAt, setLastCreatedAt] = useState(null);
+  const [isSearchMode, setIsSearchMode] = useState(false);
+  const [searchLastCreatedAt, setSearchLastCreatedAt] = useState(null);
+  const [searchHasMore, setSearchHasMore] = useState(true);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  
   const navigate = useNavigate();
+  const observerRef = useRef();
+  const hasInitialized = useRef(false);
 
+  // 무한 스크롤 옵저버 설정
+  const lastElementRef = useCallback((node) => {
+    if (loading) return;
+    
+    if (observerRef.current) observerRef.current.disconnect();
+    
+    observerRef.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore && !loadingMore) {
+        loadMorePosts();
+      }
+    });
+    
+    if (node) observerRef.current.observe(node);
+  }, [loading, hasMore, loadingMore]);
+
+  // 초기 게시글 로드
   useEffect(() => {
-    const fetchPosts = async () => {
+    const fetchInitialPosts = async () => {
       try {
-        const { data, error } = await getAllPosts();
+        setLoading(true);
+        
+        const { data, error } = await getPostsWithPagination();
+        
         if (error) throw error;
         
-        // 발행된 포스트만 필터링
-        const publishedPosts = data.filter(post => post.is_published);
-        
-        setPosts(publishedPosts);
-        setFilteredPosts(publishedPosts);
-        
-        // 모든 태그 수집
-        const tags = new Set();
-        publishedPosts.forEach(post => {
-          if (post.tags && Array.isArray(post.tags)) {
-            post.tags.forEach(tag => tags.add(tag));
-          }
-        });
-        setAllTags(Array.from(tags).sort());
+        if (data && data.length > 0) {
+          setPosts(data);
+          setFilteredPosts(data);
+          setLastCreatedAt(data[data.length - 1].created_at);
+          setHasMore(data.length === 5);
+          setIsSearchMode(false);
+          
+          // 모든 태그 수집
+          const tags = new Set();
+          data.forEach(post => {
+            if (post.tags && Array.isArray(post.tags)) {
+              post.tags.forEach(tag => tags.add(tag));
+            }
+          });
+          setAllTags(Array.from(tags).sort());
+        }
       } catch (error) {
         console.error('게시글을 불러오는데 실패했습니다:', error);
       } finally {
@@ -53,35 +85,104 @@ const BlogList = () => {
       }
     };
 
-    fetchPosts();
-  }, []);
+    fetchInitialPosts();
+  }, []); // 의존성 배열 비움
 
-  // 태그 필터링 + 검색어 필터링 조합
-  useEffect(() => {
-    // 검색어로 게시글 필터링
-    let filtered = posts.filter(post => {
-      if (!searchKeyword.trim()) return true;
+  // 추가 게시글 로드
+  const loadMorePosts = async () => {
+    if (loadingMore || !hasMore) return;
+
+    try {
+      setLoadingMore(true);
       
-      const searchLower = searchKeyword.toLowerCase();
-      const excerpt = Array.isArray(post.excerpt) ? post.excerpt.join(' ') : post.excerpt || '';
-      
-      return (
-        post.title.toLowerCase().includes(searchLower) ||
-        excerpt.toLowerCase().includes(searchLower) ||
-        post.content.toLowerCase().includes(searchLower)
-      );
-    });
-    
-    // 태그 필터링
-    if (selectedTags.length > 0) {
-      filtered = filtered.filter(post => 
-        post.tags && Array.isArray(post.tags) &&
-        selectedTags.some(tag => post.tags.includes(tag))
-      );
+      if (isSearchMode) {
+        // 검색 모드: 검색 결과 추가 로드
+        const { data, error } = await searchPostsWithPagination(
+          searchKeyword, 
+          selectedTags, 
+          searchLastCreatedAt
+        );
+        
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          setFilteredPosts(prev => [...prev, ...data]);
+          setSearchLastCreatedAt(data[data.length - 1].created_at);
+          setSearchHasMore(data.length === 2);
+          setHasMore(data.length === 2); // 검색 모드에서도 hasMore 업데이트
+        } else {
+          setSearchHasMore(false);
+          setHasMore(false);
+        }
+      } else {
+        // 일반 모드: 전체 게시글 추가 로드
+        const { data, error } = await getPostsWithPagination(lastCreatedAt);
+        
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          setPosts(prev => [...prev, ...data]);
+          setFilteredPosts(prev => [...prev, ...data]);
+          setLastCreatedAt(data[data.length - 1].created_at);
+          setHasMore(data.length === 2);
+        } else {
+          setHasMore(false);
+        }
+      }
+    } catch (error) {
+      console.error('추가 게시글을 불러오는데 실패했습니다:', error);
+    } finally {
+      setLoadingMore(false);
     }
-    
-    setFilteredPosts(filtered);
-  }, [selectedTags, searchKeyword, posts]);
+  };
+
+  // 검색 실행
+  const executeSearch = async () => {
+    if (!searchKeyword.trim() && selectedTags.length === 0) {
+      // 검색 조건이 없으면 일반 모드로 전환
+      setIsSearchMode(false);
+      setFilteredPosts(posts);
+      setSearchHasMore(true);
+      setSearchLastCreatedAt(null);
+      setHasMore(true);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setIsSearchMode(true);
+      
+      const { data, error } = await searchPostsWithPagination(searchKeyword, selectedTags);
+      
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        setFilteredPosts(data);
+        setSearchLastCreatedAt(data[data.length - 1].created_at);
+        setSearchHasMore(data.length === 2);
+        setHasMore(data.length === 2);
+      } else {
+        setFilteredPosts([]);
+        setSearchHasMore(false);
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.error('검색에 실패했습니다:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 검색어나 태그 변경 시 검색 실행
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      executeSearch();
+    }, 300); // 300ms 디바운스
+
+    return () => clearTimeout(timer);
+  }, [searchKeyword, selectedTags]);
+
+
 
   // 검색어로 필터링된 태그들
   const filteredTags = allTags.filter(tag => 
@@ -153,6 +254,31 @@ const BlogList = () => {
               </Box>
             </Paper>
           ))}
+          
+          {/* 로딩 상태 */}
+          {loadingMore && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+              <CircularProgress />
+            </Box>
+          )}
+          
+          {/* 더 이상 로드할 게시글이 없음 */}
+          {!hasMore && !loadingMore && filteredPosts.length > 0 && (
+            <Box sx={{ textAlign: 'center', py: 3, color: 'text.secondary' }}>
+              <Typography variant="body2">
+                모든 게시글을 불러왔습니다.
+              </Typography>
+            </Box>
+          )}
+          
+          {/* 검색 결과가 없음 */}
+          {!loading && filteredPosts.length === 0 && isSearchMode && (
+            <Box sx={{ textAlign: 'center', py: 3, color: 'text.secondary' }}>
+              <Typography variant="body2">
+                검색 결과가 없습니다.
+              </Typography>
+            </Box>
+          )}
         </Box>
       </Box>
     );
@@ -203,10 +329,11 @@ const BlogList = () => {
 
       {/* 게시글 목록 */}
       <Box sx={{ display: 'grid', gap: 3 }}>
-        {filteredPosts.map((post) => (
+        {(filteredPosts.length > 0 ? filteredPosts : posts).map((post, index) => (
           <Paper 
             key={post.id} 
             elevation={1} 
+            ref={index === (filteredPosts.length > 0 ? filteredPosts : posts).length - 1 ? lastElementRef : null}
             sx={{ 
               p: 3, 
               cursor: 'pointer',

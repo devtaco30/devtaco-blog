@@ -69,25 +69,20 @@ const BlogPost = () => {
   useEffect(() => {
     if (post && !loading && !viewCountIncremented) {
       const viewKey = `viewed_${id}`;
-      console.log('조회수 증가 체크:', { viewKey, alreadyViewed: sessionStorage.getItem(viewKey) });
       
       if (!sessionStorage.getItem(viewKey)) {
-        console.log('조회수 증가 시작');
         setViewCountIncremented(true); // 즉시 상태 변경
         
         incrementViewCount(id).then(({ data: updatedPost, error }) => {
           if (!error && updatedPost) {
-            console.log('조회수 증가 성공:', updatedPost.view_count);
             setPost(updatedPost);
             sessionStorage.setItem(viewKey, 'true');
-            console.log('세션 스토리지에 조회 기록 저장됨');
           }
         }).catch((viewCountError) => {
           console.error('조회수 증가 실패:', viewCountError);
           setViewCountIncremented(false); // 에러 시 상태 복구
         });
       } else {
-        console.log('이미 조회한 게시글입니다');
         setViewCountIncremented(true);
       }
     }

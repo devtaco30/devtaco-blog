@@ -122,3 +122,63 @@ export const incrementViewCount = async (id) => {
     return { data: null, error };
   }
 };
+
+// 무한 스크롤용: 전체 게시글 조회 (5개씩)
+export const getPostsWithPagination = async (lastCreatedAt = null, limit = 5) => {
+  try {
+    let query = supabase
+      .from('posts')
+      .select('*')
+      .eq('is_published', true)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    // 마지막 게시글 이후부터 조회
+    if (lastCreatedAt) {
+      query = query.lt('created_at', lastCreatedAt);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error fetching posts with pagination:', error);
+    return { data: null, error };
+  }
+};
+
+// 무한 스크롤용: 검색 결과 조회 (5개씩)
+export const searchPostsWithPagination = async (searchTerm, tags = [], lastCreatedAt = null, limit = 5) => {
+  try {
+    let query = supabase
+      .from('posts')
+      .select('*')
+      .eq('is_published', true)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    // 검색어 필터링
+    if (searchTerm && searchTerm.trim()) {
+      query = query.or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%`);
+    }
+
+    // 태그 필터링
+    if (tags && tags.length > 0) {
+      query = query.overlaps('tags', tags);
+    }
+
+    // 마지막 게시글 이후부터 조회
+    if (lastCreatedAt) {
+      query = query.lt('created_at', lastCreatedAt);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error searching posts with pagination:', error);
+    return { data: null, error };
+  }
+};
