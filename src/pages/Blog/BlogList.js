@@ -246,7 +246,7 @@ const BlogList = () => {
             </Box>
             
             <Typography variant="caption" color="text.secondary">
-              {formatDate(post.published_at)} | 조회수: {post.view_count || 0}
+                              {formatDate(post.published_at)}
             </Typography>
           </Paper>
         ))}

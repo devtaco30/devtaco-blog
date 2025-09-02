@@ -218,7 +218,7 @@ const BlogPost = () => {
         </Box>
         
         <Typography variant="body2" color="text.secondary">
-          {formatDate(post.published_at)} | 조회수: {post.view_count || 0}
+                          {formatDate(post.published_at)}
         </Typography>
       </Paper>
 
