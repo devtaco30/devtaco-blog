@@ -14,7 +14,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
-import { getAllPosts, getPostsWithPagination, searchPostsWithPagination } from '../../services/posts';
+import { getPostsWithPagination, searchPostsWithPagination } from '../../services/posts';
 
 const BlogList = () => {
   const [posts, setPosts] = useState([]);
@@ -30,12 +30,56 @@ const BlogList = () => {
   const [lastCreatedAt, setLastCreatedAt] = useState(null);
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [searchLastCreatedAt, setSearchLastCreatedAt] = useState(null);
-  const [searchHasMore, setSearchHasMore] = useState(true);
-  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+
   
   const navigate = useNavigate();
   const observerRef = useRef();
-  const hasInitialized = useRef(false);
+
+  // 추가 게시글 로드
+  const loadMorePosts = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+
+    try {
+      setLoadingMore(true);
+      
+      if (isSearchMode) {
+        // 검색 모드: 검색 결과 추가 로드
+        const { data, error } = await searchPostsWithPagination(
+          searchKeyword, 
+          selectedTags, 
+          searchLastCreatedAt
+        );
+        
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          setFilteredPosts(prev => [...prev, ...data]);
+          setSearchLastCreatedAt(data[data.length - 1].created_at);
+          setHasMore(data.length === 2); // 검색 모드에서도 hasMore 업데이트
+        } else {
+          setHasMore(false);
+        }
+      } else {
+        // 일반 모드: 전체 게시글 추가 로드
+        const { data, error } = await getPostsWithPagination(lastCreatedAt);
+        
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          setPosts(prev => [...prev, ...data]);
+          setFilteredPosts(prev => [...prev, ...data]);
+          setLastCreatedAt(data[data.length - 1].created_at);
+          setHasMore(data.length === 2);
+        } else {
+          setHasMore(false);
+        }
+      }
+    } catch (error) {
+      console.error('추가 게시글을 불러오는데 실패했습니다:', error);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore, hasMore, isSearchMode, searchKeyword, selectedTags, searchLastCreatedAt, lastCreatedAt]);
 
   // 무한 스크롤 옵저버 설정
   const lastElementRef = useCallback((node) => {
@@ -50,7 +94,7 @@ const BlogList = () => {
     });
     
     if (node) observerRef.current.observe(node);
-  }, [loading, hasMore, loadingMore]);
+  }, [loading, hasMore, loadingMore, loadMorePosts]);
 
   // 초기 게시글 로드
   useEffect(() => {
@@ -88,61 +132,12 @@ const BlogList = () => {
     fetchInitialPosts();
   }, []); // 의존성 배열 비움
 
-  // 추가 게시글 로드
-  const loadMorePosts = async () => {
-    if (loadingMore || !hasMore) return;
-
-    try {
-      setLoadingMore(true);
-      
-      if (isSearchMode) {
-        // 검색 모드: 검색 결과 추가 로드
-        const { data, error } = await searchPostsWithPagination(
-          searchKeyword, 
-          selectedTags, 
-          searchLastCreatedAt
-        );
-        
-        if (error) throw error;
-        
-        if (data && data.length > 0) {
-          setFilteredPosts(prev => [...prev, ...data]);
-          setSearchLastCreatedAt(data[data.length - 1].created_at);
-          setSearchHasMore(data.length === 2);
-          setHasMore(data.length === 2); // 검색 모드에서도 hasMore 업데이트
-        } else {
-          setSearchHasMore(false);
-          setHasMore(false);
-        }
-      } else {
-        // 일반 모드: 전체 게시글 추가 로드
-        const { data, error } = await getPostsWithPagination(lastCreatedAt);
-        
-        if (error) throw error;
-        
-        if (data && data.length > 0) {
-          setPosts(prev => [...prev, ...data]);
-          setFilteredPosts(prev => [...prev, ...data]);
-          setLastCreatedAt(data[data.length - 1].created_at);
-          setHasMore(data.length === 2);
-        } else {
-          setHasMore(false);
-        }
-      }
-    } catch (error) {
-      console.error('추가 게시글을 불러오는데 실패했습니다:', error);
-    } finally {
-      setLoadingMore(false);
-    }
-  };
-
   // 검색 실행
-  const executeSearch = async () => {
+  const executeSearch = useCallback(async () => {
     if (!searchKeyword.trim() && selectedTags.length === 0) {
       // 검색 조건이 없으면 일반 모드로 전환
       setIsSearchMode(false);
       setFilteredPosts(posts);
-      setSearchHasMore(true);
       setSearchLastCreatedAt(null);
       setHasMore(true);
       return;
@@ -159,11 +154,9 @@ const BlogList = () => {
       if (data && data.length > 0) {
         setFilteredPosts(data);
         setSearchLastCreatedAt(data[data.length - 1].created_at);
-        setSearchHasMore(data.length === 2);
         setHasMore(data.length === 2);
       } else {
         setFilteredPosts([]);
-        setSearchHasMore(false);
         setHasMore(false);
       }
     } catch (error) {
@@ -171,7 +164,7 @@ const BlogList = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchKeyword, selectedTags, posts]);
 
   // 검색어나 태그 변경 시 검색 실행
   useEffect(() => {
@@ -180,7 +173,7 @@ const BlogList = () => {
     }, 300); // 300ms 디바운스
 
     return () => clearTimeout(timer);
-  }, [searchKeyword, selectedTags]);
+  }, [searchKeyword, selectedTags, executeSearch]);
 
 
 
