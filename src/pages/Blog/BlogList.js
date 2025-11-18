@@ -15,6 +15,15 @@ import {
 import { useNavigate } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
 import { getPostsWithPagination, searchPostsWithPagination } from '../../services/posts';
+import { getAllCategories, getPostCountsByAllCategories } from '../../services/categories';
+
+// UI용 "전체" 카테고리 (DB에는 존재하지 않음)
+const ALL_CATEGORY = { 
+  key: 'all', 
+  name: '전체', 
+  sort_order: 0, 
+  is_active: true 
+};
 
 const BlogList = () => {
   const [posts, setPosts] = useState([]);
@@ -30,6 +39,9 @@ const BlogList = () => {
   const [lastCreatedAt, setLastCreatedAt] = useState(null);
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [searchLastCreatedAt, setSearchLastCreatedAt] = useState(null);
+  const [categories, setCategories] = useState([ALL_CATEGORY]);
+  const [categoryCounts, setCategoryCounts] = useState({});
+  const [selectedCategoryKey, setSelectedCategoryKey] = useState('all');
 
   
   const navigate = useNavigate();
@@ -47,7 +59,9 @@ const BlogList = () => {
         const { data, error } = await searchPostsWithPagination(
           searchKeyword, 
           selectedTags, 
-          searchLastCreatedAt
+          searchLastCreatedAt,
+          5,
+          selectedCategoryKey
         );
         
         if (error) throw error;
@@ -61,7 +75,7 @@ const BlogList = () => {
         }
       } else {
         // 일반 모드: 전체 게시글 추가 로드
-        const { data, error } = await getPostsWithPagination(lastCreatedAt);
+        const { data, error } = await getPostsWithPagination(lastCreatedAt, 5, selectedCategoryKey);
         
         if (error) throw error;
         
@@ -79,7 +93,7 @@ const BlogList = () => {
     } finally {
       setLoadingMore(false);
     }
-  }, [loadingMore, hasMore, isSearchMode, searchKeyword, selectedTags, searchLastCreatedAt, lastCreatedAt]);
+  }, [loadingMore, hasMore, isSearchMode, searchKeyword, selectedTags, searchLastCreatedAt, lastCreatedAt, selectedCategoryKey]);
 
   // 무한 스크롤 옵저버 설정
   const lastElementRef = useCallback((node) => {
@@ -96,13 +110,48 @@ const BlogList = () => {
     if (node) observerRef.current.observe(node);
   }, [loading, hasMore, loadingMore, loadMorePosts]);
 
+  // 카테고리 조회
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const { data: categoriesData, error: categoriesError } = await getAllCategories();
+        
+        if (categoriesError) {
+          console.error('카테고리 조회 에러:', categoriesError);
+          throw categoriesError;
+        }
+        
+        // "전체" 카테고리를 맨 앞에 추가 (UI용 가상 카테고리)
+        // categoriesData가 null이거나 undefined인 경우 빈 배열로 처리
+        const categoriesWithAll = [
+          ALL_CATEGORY,
+          ...(categoriesData || [])
+        ];
+        
+        setCategories(categoriesWithAll);
+        
+        // 카테고리별 포스트 개수 조회
+        const { data: countsData, error: countsError } = await getPostCountsByAllCategories();
+        if (!countsError && countsData) {
+          setCategoryCounts(countsData);
+        }
+      } catch (error) {
+        console.error('카테고리를 불러오는데 실패했습니다:', error);
+        // 에러가 발생해도 최소한 "전체" 카테고리는 표시
+        setCategories([ALL_CATEGORY]);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
   // 초기 게시글 로드
   useEffect(() => {
     const fetchInitialPosts = async () => {
       try {
         setLoading(true);
         
-        const { data, error } = await getPostsWithPagination();
+        const { data, error } = await getPostsWithPagination(null, 5, selectedCategoryKey);
         
         if (error) throw error;
         
@@ -121,6 +170,10 @@ const BlogList = () => {
             }
           });
           setAllTags(Array.from(tags).sort());
+        } else {
+          setPosts([]);
+          setFilteredPosts([]);
+          setHasMore(false);
         }
       } catch (error) {
         console.error('게시글을 불러오는데 실패했습니다:', error);
@@ -130,16 +183,24 @@ const BlogList = () => {
     };
 
     fetchInitialPosts();
-  }, []); // 의존성 배열 비움
+  }, [selectedCategoryKey]); // selectedCategoryKey가 변경될 때마다 다시 로드
 
   // 검색 실행
   const executeSearch = useCallback(async () => {
     if (!searchKeyword.trim() && selectedTags.length === 0) {
       // 검색 조건이 없으면 일반 모드로 전환
       setIsSearchMode(false);
-      setFilteredPosts(posts);
       setSearchLastCreatedAt(null);
       setHasMore(true);
+      
+      // 선택된 카테고리에 맞는 포스트 다시 로드
+      const { data, error } = await getPostsWithPagination(null, 5, selectedCategoryKey);
+      if (!error && data) {
+        setPosts(data);
+        setFilteredPosts(data);
+        setLastCreatedAt(data[data.length - 1]?.created_at || null);
+        setHasMore(data.length === 5);
+      }
       return;
     }
 
@@ -147,7 +208,7 @@ const BlogList = () => {
       setLoading(true);
       setIsSearchMode(true);
       
-      const { data, error } = await searchPostsWithPagination(searchKeyword, selectedTags);
+      const { data, error } = await searchPostsWithPagination(searchKeyword, selectedTags, null, 5, selectedCategoryKey);
       
       if (error) throw error;
       
@@ -164,7 +225,7 @@ const BlogList = () => {
     } finally {
       setLoading(false);
     }
-  }, [searchKeyword, selectedTags, posts]);
+  }, [searchKeyword, selectedTags, selectedCategoryKey]);
 
   // 검색어나 태그 변경 시 검색 실행
   useEffect(() => {
@@ -201,6 +262,47 @@ const BlogList = () => {
 
   const handlePostClick = (post) => {
     navigate(`/posts/${post.id}`);
+  };
+
+  // 카테고리 선택 핸들러
+  const handleCategoryClick = async (categoryKey) => {
+    setSelectedCategoryKey(categoryKey);
+    setSearchKeyword('');
+    setSelectedTags([]);
+    setIsSearchMode(false);
+    
+    try {
+      setLoading(true);
+      const { data, error } = await getPostsWithPagination(null, 5, categoryKey);
+      
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        setPosts(data);
+        setFilteredPosts(data);
+        setLastCreatedAt(data[data.length - 1].created_at);
+        setHasMore(data.length === 5);
+        
+        // 모든 태그 수집
+        const tags = new Set();
+        data.forEach(post => {
+          if (post.tags && Array.isArray(post.tags)) {
+            post.tags.forEach(tag => tags.add(tag));
+          }
+        });
+        setAllTags(Array.from(tags).sort());
+      } else {
+        setPosts([]);
+        setFilteredPosts([]);
+        setLastCreatedAt(null);
+        setHasMore(false);
+        setAllTags([]);
+      }
+    } catch (error) {
+      console.error('카테고리 필터링에 실패했습니다:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // 날짜 포맷팅
@@ -279,9 +381,44 @@ const BlogList = () => {
 
   return (
     <Box sx={{ p: { xs: 2, md: 4 } }}>
-      <Typography variant="h4" sx={{ mb: 4 }}>
+      <Typography variant="h4" sx={{ mb: 2 }}>
         우아하고 싶은 포스트
       </Typography>
+
+      {/* 카테고리 필터 */}
+      <Box 
+        sx={{ 
+          mb: 3, 
+          pt: 2,
+          pb: 2,
+          borderTop: '1px solid #999999',
+          borderBottom: '1px solid #999999',
+          display: 'flex', 
+          gap: 1, 
+          flexWrap: 'wrap', 
+          alignItems: 'center' 
+        }}
+      >
+        {categories.map((category) => (
+          <Chip
+            key={category.key}
+            label={`${category.name} (${categoryCounts[category.key] || 0})`}
+            onClick={() => handleCategoryClick(category.key)}
+            sx={{
+              backgroundColor: selectedCategoryKey === category.key ? '#f0f7e0' : '#ffffff',
+              color: selectedCategoryKey === category.key ? '#000000' : '#000000',
+              border: '1px solid',
+              borderColor: selectedCategoryKey === category.key ? '#000000' : '#000000',
+              cursor: 'pointer',
+              fontWeight: selectedCategoryKey === category.key ? 'bold' : 'normal',
+              '&:hover': {
+                backgroundColor: selectedCategoryKey === category.key ? '#f0f7e0' : '#f5f5f5',
+                borderColor: '#000000'
+              }
+            }}
+          />
+        ))}
+      </Box>
 
       {/* 검색 및 필터 */}
       <Box sx={{ mb: 4, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>

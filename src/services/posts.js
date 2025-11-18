@@ -124,7 +124,7 @@ export const incrementViewCount = async (id) => {
 };
 
 // 무한 스크롤용: 전체 게시글 조회 (5개씩)
-export const getPostsWithPagination = async (lastCreatedAt = null, limit = 5) => {
+export const getPostsWithPagination = async (lastCreatedAt = null, limit = 5, categoryKey = null) => {
   try {
     let query = supabase
       .from('posts')
@@ -132,6 +132,11 @@ export const getPostsWithPagination = async (lastCreatedAt = null, limit = 5) =>
       .eq('is_published', true)
       .order('created_at', { ascending: false })
       .limit(limit);
+
+    // 카테고리 필터링
+    if (categoryKey && categoryKey !== 'all') {
+      query = query.eq('category_key', categoryKey);
+    }
 
     // 마지막 게시글 이후부터 조회
     if (lastCreatedAt) {
@@ -149,7 +154,7 @@ export const getPostsWithPagination = async (lastCreatedAt = null, limit = 5) =>
 };
 
 // 무한 스크롤용: 검색 결과 조회 (5개씩)
-export const searchPostsWithPagination = async (searchTerm, tags = [], lastCreatedAt = null, limit = 5) => {
+export const searchPostsWithPagination = async (searchTerm, tags = [], lastCreatedAt = null, limit = 5, categoryKey = null) => {
   try {
     let query = supabase
       .from('posts')
@@ -157,6 +162,11 @@ export const searchPostsWithPagination = async (searchTerm, tags = [], lastCreat
       .eq('is_published', true)
       .order('created_at', { ascending: false })
       .limit(limit);
+
+    // 카테고리 필터링
+    if (categoryKey && categoryKey !== 'all') {
+      query = query.eq('category_key', categoryKey);
+    }
 
     // 검색어 필터링
     if (searchTerm && searchTerm.trim()) {

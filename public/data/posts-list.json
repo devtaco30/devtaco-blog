@@ -1,5 +1,23 @@
 [
   {
+    "id": 9,
+    "slug": "post-9",
+    "title": "정적 블로그에서 동적 블로그로: Supabase를 선택한 이유",
+    "date": "2025-09-01",
+    "tags": [
+      "Supabase",
+      "PostgreSQL",
+      "Backend",
+      "Migration",
+      "Database",
+      "Serverless"
+    ],
+    "excerpt": [
+      "정적 마크다운 블로그의 한계와 Supabase 도입 과정을 공유합니다.",
+      "Backend 개발자 관점에서 PostgreSQL 기반 서버리스 아키텍처의 장점을 알아봅니다."
+    ]
+  },
+  {
     "id": 6,
     "slug": "post-6",
     "title": "Web3.0: 탈중앙화로 개인이 주권을 갖는 참여형 웹의 미래",

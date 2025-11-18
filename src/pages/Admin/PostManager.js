@@ -16,7 +16,11 @@ import {
   FormControlLabel,
   Alert,
   Snackbar,
-  LinearProgress
+  LinearProgress,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -31,6 +35,7 @@ import {
   deletePost, 
   togglePostPublish 
 } from '../../services/posts';
+import { getAllCategories } from '../../services/categories';
 import { useImageUpload } from '../../hooks/useImageUpload';
 import { useAuth } from '../../contexts/AuthContext';
 import { HASH_ROUTES } from '../../constants/routes';
@@ -38,14 +43,18 @@ import { HASH_ROUTES } from '../../constants/routes';
 const PostManager = () => {
   const { user, signOut } = useAuth();
   const [posts, setPosts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [newPost, setNewPost] = useState({
     title: '',
     content: '',
     excerpt: ['', '', ''], // 최대 3개 배열
     tags: [],
+    category_key: 'general', // 기본값 설정
     is_published: false
   });
+  const [tagsInput, setTagsInput] = useState(''); // 태그 입력 문자열
   const [editingPost, setEditingPost] = useState(null);
+  const [editingTagsInput, setEditingTagsInput] = useState(''); // 수정 다이얼로그용 태그 입력 문자열
   const [openDialog, setOpenDialog] = useState(false);
   const [loading, setLoading] = useState(true);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
@@ -97,6 +106,7 @@ const PostManager = () => {
         content: newPost.content,
         tags: newPost.tags.length > 0 ? newPost.tags : [],
         excerpt: cleanExcerpt,
+        category_key: newPost.category_key || 'general', // 빈 값 방지
         published_at: Date.now(), // epoch milliseconds
         images: tempImages.length > 0 ? tempImages : []
       };
@@ -140,8 +150,10 @@ const PostManager = () => {
         content: '',
         excerpt: ['', '', ''], // 초기화
         tags: [],
+        category_key: 'general', // 초기화
         is_published: false
       });
+      setTagsInput(''); // 태그 입력 필드 초기화
       
       // 이미지 상태 정리
       cleanup();
@@ -168,6 +180,7 @@ const PostManager = () => {
         content: editingPost.content,
         excerpt: cleanExcerpt,
         tags: editingPost.tags.length > 0 ? editingPost.tags : [],
+        category_key: editingPost.category_key || 'general', // 빈 값 방지
         images: tempImages.length > 0 ? tempImages : (editingPost.images || [])
       };
 
@@ -208,6 +221,7 @@ const PostManager = () => {
         post.id === editingPost.id ? data : post
       ));
       setEditingPost(null);
+      setEditingTagsInput(''); // 태그 입력 필드 초기화
       setOpenDialog(false);
       
       // 이미지 상태 정리
@@ -249,13 +263,17 @@ const PostManager = () => {
     }
   };
 
-  // 태그 입력 처리
+  // 태그 입력 처리 - 입력 문자열만 저장
   const handleTagsChange = (tagsString) => {
+    setTagsInput(tagsString);
+    // 배열로 변환하여 tags에도 저장 (실시간 미리보기용)
     const tags = tagsString.split(',').map(tag => tag.trim()).filter(tag => tag);
     setNewPost({ ...newPost, tags });
   };
 
   const handleEditTagsChange = (tagsString) => {
+    setEditingTagsInput(tagsString);
+    // 배열로 변환하여 tags에도 저장 (실시간 미리보기용)
     const tags = tagsString.split(',').map(tag => tag.trim()).filter(tag => tag);
     setEditingPost({ ...editingPost, tags });
   };
@@ -370,6 +388,20 @@ const PostManager = () => {
     setSnackbar({ open: true, message, severity });
   };
 
+  // 카테고리 조회
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const { data, error } = await getAllCategories();
+        if (error) throw error;
+        setCategories(data || []);
+      } catch (error) {
+        console.error('카테고리 조회 중 오류:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
+
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
@@ -449,7 +481,21 @@ const PostManager = () => {
         <Typography variant="h6" sx={{ mb: 2 }}>
           새 포스트 작성 (다음 ID: {getNextId()})
         </Typography>
-        <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: '1fr 1fr' }}>
+        <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: '1fr 1fr 1fr' }}>
+          <FormControl fullWidth>
+            <InputLabel>카테고리</InputLabel>
+            <Select
+              value={newPost.category_key || 'general'}
+              onChange={(e) => setNewPost({ ...newPost, category_key: e.target.value })}
+              label="카테고리"
+            >
+              {categories.map((category) => (
+                <MenuItem key={category.key} value={category.key}>
+                  {category.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <TextField
             label="제목"
             value={newPost.title}
@@ -458,7 +504,7 @@ const PostManager = () => {
           />
           <TextField
             label="태그 (쉼표로 구분)"
-            value={newPost.tags.join(', ')}
+            value={tagsInput}
             onChange={(e) => handleTagsChange(e.target.value)}
             placeholder="Java, Spring Boot, Backend"
             fullWidth
@@ -590,8 +636,10 @@ const PostManager = () => {
                   onClick={() => {
                     setEditingPost({
                       ...post,
+                      category_key: post.category_key || 'general',
                       excerpt: Array.isArray(post.excerpt) ? [...post.excerpt, '', '', ''].slice(0, 3) : ['', '', '']
                     });
+                    setEditingTagsInput(Array.isArray(post.tags) ? post.tags.join(', ') : ''); // 태그 입력 필드 초기화
                     setOpenDialog(true);
                   }}
                 >
@@ -618,7 +666,21 @@ const PostManager = () => {
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="lg" fullWidth>
         <DialogTitle>포스트 수정</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: '1fr 1fr', mt: 1 }}>
+          <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: '1fr 1fr 1fr', mt: 1 }}>
+            <FormControl fullWidth>
+              <InputLabel>카테고리</InputLabel>
+              <Select
+                value={editingPost?.category_key || 'general'}
+                onChange={(e) => setEditingPost({ ...editingPost, category_key: e.target.value })}
+                label="카테고리"
+              >
+                {categories.map((category) => (
+                  <MenuItem key={category.key} value={category.key}>
+                    {category.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
             <TextField
               label="제목"
               value={editingPost?.title || ''}
@@ -626,7 +688,7 @@ const PostManager = () => {
             />
             <TextField
               label="태그 (쉼표로 구분)"
-              value={editingPost?.tags?.join(', ') || ''}
+              value={editingTagsInput}
               onChange={(e) => handleEditTagsChange(e.target.value)}
               fullWidth
             />
