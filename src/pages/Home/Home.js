@@ -28,7 +28,12 @@ const Home = () => {
         // Supabase 응답 구조에 맞게 수정
         const posts = allPosts.data || [];
         
-        const featured = posts.slice(0, 3);
+        // 발행된 포스트 중 Home 노출 설정된 것만 필터링
+        const filteredPosts = posts
+          .filter(post => post.is_published === true && post.is_featured === true);
+        
+        // 최신 3개만 선택
+        const featured = filteredPosts.slice(0, 3);
         
         setFeaturedPosts(featured);
       } catch (error) {

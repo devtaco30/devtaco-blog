@@ -50,7 +50,8 @@ const PostManager = () => {
     excerpt: ['', '', ''], // 최대 3개 배열
     tags: [],
     category_key: 'general', // 기본값 설정
-    is_published: false
+    is_published: false,
+    is_featured: true // Home 노출 여부 (기본값 true)
   });
   const [tagsInput, setTagsInput] = useState(''); // 태그 입력 문자열
   const [editingPost, setEditingPost] = useState(null);
@@ -107,6 +108,7 @@ const PostManager = () => {
         tags: newPost.tags.length > 0 ? newPost.tags : [],
         excerpt: cleanExcerpt,
         category_key: newPost.category_key || 'general', // 빈 값 방지
+        is_featured: newPost.is_featured !== undefined ? newPost.is_featured : true, // Home 노출 여부
         published_at: Date.now(), // epoch milliseconds
         images: tempImages.length > 0 ? tempImages : []
       };
@@ -151,7 +153,8 @@ const PostManager = () => {
         excerpt: ['', '', ''], // 초기화
         tags: [],
         category_key: 'general', // 초기화
-        is_published: false
+        is_published: false,
+        is_featured: true // 초기화
       });
       setTagsInput(''); // 태그 입력 필드 초기화
       
@@ -181,6 +184,7 @@ const PostManager = () => {
         excerpt: cleanExcerpt,
         tags: editingPost.tags.length > 0 ? editingPost.tags : [],
         category_key: editingPost.category_key || 'general', // 빈 값 방지
+        is_featured: editingPost.is_featured !== undefined ? editingPost.is_featured : true, // Home 노출 여부
         images: tempImages.length > 0 ? tempImages : (editingPost.images || [])
       };
 
@@ -557,7 +561,7 @@ const PostManager = () => {
           </div>
         </Box>
 
-        <Box sx={{ mt: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
+        <Box sx={{ mt: 2, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
           <FormControlLabel
             control={
               <Switch
@@ -566,6 +570,15 @@ const PostManager = () => {
               />
             }
             label="즉시 발행"
+          />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={newPost.is_featured !== undefined ? newPost.is_featured : true}
+                onChange={(e) => setNewPost({ ...newPost, is_featured: e.target.checked })}
+              />
+            }
+            label="Home 노출"
           />
           <Button 
             variant="contained" 
@@ -637,6 +650,7 @@ const PostManager = () => {
                     setEditingPost({
                       ...post,
                       category_key: post.category_key || 'general',
+                      is_featured: post.is_featured !== undefined ? post.is_featured : true,
                       excerpt: Array.isArray(post.excerpt) ? [...post.excerpt, '', '', ''].slice(0, 3) : ['', '', '']
                     });
                     setEditingTagsInput(Array.isArray(post.tags) ? post.tags.join(', ') : ''); // 태그 입력 필드 초기화
@@ -738,6 +752,28 @@ const PostManager = () => {
                 }}
               />
             </div>
+          </Box>
+
+          {/* 발행 및 Home 노출 설정 */}
+          <Box sx={{ mt: 2, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={editingPost?.is_published || false}
+                  onChange={(e) => setEditingPost({ ...editingPost, is_published: e.target.checked })}
+                />
+              }
+              label="발행"
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={editingPost?.is_featured !== undefined ? editingPost.is_featured : true}
+                  onChange={(e) => setEditingPost({ ...editingPost, is_featured: e.target.checked })}
+                />
+              }
+              label="Home 노출"
+            />
           </Box>
         </DialogContent>
         <DialogActions>

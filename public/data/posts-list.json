@@ -1,5 +1,45 @@
 [
   {
+    "id": 13,
+    "slug": "post-13",
+    "title": "EST AI 모델 부트캠프 - (2)",
+    "date": "2025-11-20",
+    "tags": [
+      "Python",
+      "Programming",
+      "Variable"
+    ],
+    "excerpt": []
+  },
+  {
+    "id": 12,
+    "slug": "post-12",
+    "title": "EST AI 모델 부트캠프 - (1)",
+    "date": "2025-11-19",
+    "tags": [
+      "AI Ethics",
+      "Orange3",
+      "Data Analysis",
+      "AI Workflow",
+      "Machine Learning"
+    ],
+    "excerpt": []
+  },
+  {
+    "id": 11,
+    "slug": "post-11",
+    "title": "EST AI 모델 부트캠프 - (0)",
+    "date": "2025-11-18",
+    "tags": [
+      "AI",
+      "Machine Learning",
+      "Deep Learning",
+      "생성형AI",
+      "프롬프트엔지니어링"
+    ],
+    "excerpt": []
+  },
+  {
     "id": 9,
     "slug": "post-9",
     "title": "정적 블로그에서 동적 블로그로: Supabase를 선택한 이유",
