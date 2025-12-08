@@ -192,3 +192,151 @@ export const searchPostsWithPagination = async (searchTerm, tags = [], lastCreat
     return { data: null, error };
   }
 };
+
+/**
+ * 번호형 페이지네이션: 발행된 포스트만 조회 (BlogList용)
+ * @param {number} page - 페이지 번호 (1부터 시작)
+ * @param {number} limit - 페이지당 포스트 개수
+ * @param {string|null} categoryKey - 카테고리 키 (null이면 전체)
+ * @returns {Promise<{data: Array, count: number, error: Error|null}>}
+ */
+export const getPostsWithPageNumber = async (page = 1, limit = 10, categoryKey = null) => {
+  try {
+    // 페이지 번호 유효성 검사
+    if (page < 1) page = 1;
+    
+    // offset 계산 (0부터 시작)
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    // 기본 쿼리 구성 (발행된 포스트만)
+    let query = supabase
+      .from('posts')
+      .select('*', { count: 'exact' })
+      .eq('is_published', true)
+      .order('published_at', { ascending: false })
+      .range(from, to);
+
+    // 카테고리 필터링
+    if (categoryKey && categoryKey !== 'all') {
+      query = query.eq('category_key', categoryKey);
+    }
+
+    const { data, count, error } = await query;
+
+    if (error) throw error;
+    return { data: data || [], count: count || 0, error: null };
+  } catch (error) {
+    console.error('Error fetching posts with page number:', error);
+    return { data: null, count: 0, error };
+  }
+};
+
+/**
+ * 번호형 페이지네이션: 모든 포스트 조회 (PostManager용)
+ * 발행 여부와 관계없이 모든 포스트를 조회합니다.
+ * @param {number} page - 페이지 번호 (1부터 시작)
+ * @param {number} limit - 페이지당 포스트 개수
+ * @returns {Promise<{data: Array, count: number, error: Error|null}>}
+ */
+export const getAllPostsWithPageNumber = async (page = 1, limit = 20) => {
+  try {
+    // 페이지 번호 유효성 검사
+    if (page < 1) page = 1;
+    
+    // offset 계산 (0부터 시작)
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    // 모든 포스트 조회 (발행 여부 무관)
+    const { data, count, error } = await supabase
+      .from('posts')
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    if (error) throw error;
+    return { data: data || [], count: count || 0, error: null };
+  } catch (error) {
+    console.error('Error fetching all posts with page number:', error);
+    return { data: null, count: 0, error };
+  }
+};
+
+/**
+ * 번호형 페이지네이션: 검색 결과 조회 (BlogList용)
+ * 검색어, 태그, 카테고리로 필터링된 발행된 포스트를 페이지네이션으로 조회합니다.
+ * @param {string} searchTerm - 검색어
+ * @param {Array<string>} tags - 태그 배열
+ * @param {number} page - 페이지 번호 (1부터 시작)
+ * @param {number} limit - 페이지당 포스트 개수
+ * @param {string|null} categoryKey - 카테고리 키 (null이면 전체)
+ * @returns {Promise<{data: Array, count: number, error: Error|null}>}
+ */
+export const searchPostsWithPageNumber = async (searchTerm, tags = [], page = 1, limit = 10, categoryKey = null) => {
+  try {
+    // 페이지 번호 유효성 검사
+    if (page < 1) page = 1;
+    
+    // offset 계산 (0부터 시작)
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    // 기본 쿼리 구성 (발행된 포스트만)
+    let query = supabase
+      .from('posts')
+      .select('*', { count: 'exact' })
+      .eq('is_published', true)
+      .order('published_at', { ascending: false })
+      .range(from, to);
+
+    // 카테고리 필터링
+    if (categoryKey && categoryKey !== 'all') {
+      query = query.eq('category_key', categoryKey);
+    }
+
+    // 검색어 필터링
+    if (searchTerm && searchTerm.trim()) {
+      query = query.or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%`);
+    }
+
+    // 태그 필터링
+    if (tags && tags.length > 0) {
+      query = query.overlaps('tags', tags);
+    }
+
+    const { data, count, error } = await query;
+
+    if (error) throw error;
+    return { data: data || [], count: count || 0, error: null };
+  } catch (error) {
+    console.error('Error searching posts with page number:', error);
+    return { data: null, count: 0, error };
+  }
+};
+
+/**
+ * 특정 포스트보다 최신인 포스트 개수 조회 (페이지 계산용)
+ * created_at 기준 내림차순 정렬에서, 특정 포스트보다 앞에 있는 포스트 개수를 반환합니다.
+ * @param {string} targetCreatedAt - 대상 포스트의 created_at (ISO 문자열 또는 timestamp)
+ * @returns {Promise<{count: number, error: Error|null}>}
+ */
+export const getPostCountBeforeCreatedAt = async (targetCreatedAt) => {
+  try {
+    if (!targetCreatedAt) {
+      return { count: 0, error: null };
+    }
+
+    // created_at이 targetCreatedAt보다 큰 포스트 개수 조회
+    const { count, error } = await supabase
+      .from('posts')
+      .select('*', { count: 'exact', head: true })
+      .gt('created_at', targetCreatedAt);
+
+    if (error) throw error;
+    return { count: count || 0, error: null };
+  } catch (error) {
+    console.error('Error getting post count before created_at:', error);
+    return { count: 0, error };
+  }
+};
