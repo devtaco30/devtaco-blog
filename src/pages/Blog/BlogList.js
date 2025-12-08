@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Box, 
   Typography, 
@@ -10,11 +10,12 @@ import {
   IconButton,
   Modal,
   Paper,
-  CircularProgress
+  Pagination
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
-import { getPostsWithPagination, searchPostsWithPagination } from '../../services/posts';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import { getPostsWithPageNumber, searchPostsWithPageNumber } from '../../services/posts';
 import { getAllCategories, getPostCountsByAllCategories } from '../../services/categories';
 
 // UI용 "전체" 카테고리 (DB에는 존재하지 않음)
@@ -27,88 +28,23 @@ const ALL_CATEGORY = {
 
 const BlogList = () => {
   const [posts, setPosts] = useState([]);
-  const [filteredPosts, setFilteredPosts] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
   const [allTags, setAllTags] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const [lastCreatedAt, setLastCreatedAt] = useState(null);
   const [isSearchMode, setIsSearchMode] = useState(false);
-  const [searchLastCreatedAt, setSearchLastCreatedAt] = useState(null);
   const [categories, setCategories] = useState([ALL_CATEGORY]);
   const [categoryCounts, setCategoryCounts] = useState({});
   const [selectedCategoryKey, setSelectedCategoryKey] = useState('all');
-
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [searchTotalCount, setSearchTotalCount] = useState(0);
   
+  const POSTS_PER_PAGE = 10;
   const navigate = useNavigate();
-  const observerRef = useRef();
 
-  // 추가 게시글 로드
-  const loadMorePosts = useCallback(async () => {
-    if (loadingMore || !hasMore) return;
-
-    try {
-      setLoadingMore(true);
-      
-      if (isSearchMode) {
-        // 검색 모드: 검색 결과 추가 로드
-        const { data, error } = await searchPostsWithPagination(
-          searchKeyword, 
-          selectedTags, 
-          searchLastCreatedAt,
-          5,
-          selectedCategoryKey
-        );
-        
-        if (error) throw error;
-        
-        if (data && data.length > 0) {
-          setFilteredPosts(prev => [...prev, ...data]);
-          setSearchLastCreatedAt(data[data.length - 1].created_at);
-          setHasMore(data.length === 2); // 검색 모드에서도 hasMore 업데이트
-        } else {
-          setHasMore(false);
-        }
-      } else {
-        // 일반 모드: 전체 게시글 추가 로드
-        const { data, error } = await getPostsWithPagination(lastCreatedAt, 5, selectedCategoryKey);
-        
-        if (error) throw error;
-        
-        if (data && data.length > 0) {
-          setPosts(prev => [...prev, ...data]);
-          setFilteredPosts(prev => [...prev, ...data]);
-          setLastCreatedAt(data[data.length - 1].created_at);
-          setHasMore(data.length === 2);
-        } else {
-          setHasMore(false);
-        }
-      }
-    } catch (error) {
-      console.error('추가 게시글을 불러오는데 실패했습니다:', error);
-    } finally {
-      setLoadingMore(false);
-    }
-  }, [loadingMore, hasMore, isSearchMode, searchKeyword, selectedTags, searchLastCreatedAt, lastCreatedAt, selectedCategoryKey]);
-
-  // 무한 스크롤 옵저버 설정
-  const lastElementRef = useCallback((node) => {
-    if (loading) return;
-    
-    if (observerRef.current) observerRef.current.disconnect();
-    
-    observerRef.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore && !loadingMore) {
-        loadMorePosts();
-      }
-    });
-    
-    if (node) observerRef.current.observe(node);
-  }, [loading, hasMore, loadingMore, loadMorePosts]);
 
   // 카테고리 조회
   useEffect(() => {
@@ -145,23 +81,26 @@ const BlogList = () => {
     fetchCategories();
   }, []);
 
-  // 초기 게시글 로드
+  // 게시글 로드 (일반 모드)
   useEffect(() => {
-    const fetchInitialPosts = async () => {
+    let isCancelled = false;
+    
+    const fetchPosts = async () => {
+      // 검색 모드가 아닐 때만 실행
+      if (isSearchMode) return;
+      
+      // 깜빡임 방지: 로딩 상태를 표시하지 않고 데이터만 로드
+      // 이전 데이터는 유지하면서 새 데이터를 준비
       try {
-        setLoading(true);
+        const { data, count, error } = await getPostsWithPageNumber(currentPage, POSTS_PER_PAGE, selectedCategoryKey);
         
-        const { data, error } = await getPostsWithPagination(null, 5, selectedCategoryKey);
+        // 카테고리나 페이지가 다시 변경되었으면 취소
+        if (isCancelled) return;
         
         if (error) throw error;
         
+        // 데이터가 준비되면 한 번에 상태 업데이트 (깜빡임 방지)
         if (data && data.length > 0) {
-          setPosts(data);
-          setFilteredPosts(data);
-          setLastCreatedAt(data[data.length - 1].created_at);
-          setHasMore(data.length === 5);
-          setIsSearchMode(false);
-          
           // 모든 태그 수집
           const tags = new Set();
           data.forEach(post => {
@@ -169,61 +108,86 @@ const BlogList = () => {
               post.tags.forEach(tag => tags.add(tag));
             }
           });
+          
+          // 모든 상태를 한 번에 업데이트 (이전 데이터를 유지하다가 한 번에 교체)
+          setPosts(data);
+          setTotalCount(count || 0);
           setAllTags(Array.from(tags).sort());
         } else {
           setPosts([]);
-          setFilteredPosts([]);
-          setHasMore(false);
+          setTotalCount(0);
+          setAllTags([]);
         }
       } catch (error) {
-        console.error('게시글을 불러오는데 실패했습니다:', error);
-      } finally {
-        setLoading(false);
+        if (!isCancelled) {
+          console.error('게시글을 불러오는데 실패했습니다:', error);
+        }
       }
     };
 
-    fetchInitialPosts();
-  }, [selectedCategoryKey]); // selectedCategoryKey가 변경될 때마다 다시 로드
+    // 첫 로딩일 때만 로딩 상태 표시
+    if (loading && posts.length === 0) {
+      setLoading(true);
+      fetchPosts().finally(() => {
+        if (!isCancelled) {
+          setLoading(false);
+        }
+      });
+    } else {
+      // 카테고리나 페이지 변경 시에는 로딩 상태 없이 데이터만 로드
+      fetchPosts();
+    }
+
+    return () => {
+      isCancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategoryKey, currentPage, isSearchMode]); // selectedCategoryKey나 currentPage가 변경될 때마다 다시 로드
+    // loading과 posts.length는 의도적으로 dependency에서 제외 (첫 로딩 체크용, 추가 시 불필요한 재실행 발생)
 
   // 검색 실행
   const executeSearch = useCallback(async () => {
     if (!searchKeyword.trim() && selectedTags.length === 0) {
       // 검색 조건이 없으면 일반 모드로 전환
       setIsSearchMode(false);
-      setSearchLastCreatedAt(null);
-      setHasMore(true);
-      
-      // 선택된 카테고리에 맞는 포스트 다시 로드
-      const { data, error } = await getPostsWithPagination(null, 5, selectedCategoryKey);
-      if (!error && data) {
-        setPosts(data);
-        setFilteredPosts(data);
-        setLastCreatedAt(data[data.length - 1]?.created_at || null);
-        setHasMore(data.length === 5);
-      }
+      setCurrentPage(1);
       return;
     }
 
     try {
-      setLoading(true);
+      // 검색 모드로 전환
       setIsSearchMode(true);
+      setCurrentPage(1); // 검색 시 첫 페이지로 리셋
       
-      const { data, error } = await searchPostsWithPagination(searchKeyword, selectedTags, null, 5, selectedCategoryKey);
+      const { data, count, error } = await searchPostsWithPageNumber(
+        searchKeyword, 
+        selectedTags, 
+        1, 
+        POSTS_PER_PAGE, 
+        selectedCategoryKey
+      );
       
       if (error) throw error;
       
       if (data && data.length > 0) {
-        setFilteredPosts(data);
-        setSearchLastCreatedAt(data[data.length - 1].created_at);
-        setHasMore(data.length === 2);
+        setPosts(data);
+        setSearchTotalCount(count || 0);
+        
+        // 모든 태그 수집
+        const tags = new Set();
+        data.forEach(post => {
+          if (post.tags && Array.isArray(post.tags)) {
+            post.tags.forEach(tag => tags.add(tag));
+          }
+        });
+        setAllTags(Array.from(tags).sort());
       } else {
-        setFilteredPosts([]);
-        setHasMore(false);
+        setPosts([]);
+        setSearchTotalCount(0);
+        setAllTags([]);
       }
     } catch (error) {
       console.error('검색에 실패했습니다:', error);
-    } finally {
-      setLoading(false);
     }
   }, [searchKeyword, selectedTags, selectedCategoryKey]);
 
@@ -234,7 +198,49 @@ const BlogList = () => {
     }, 300); // 300ms 디바운스
 
     return () => clearTimeout(timer);
-  }, [searchKeyword, selectedTags, executeSearch]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchKeyword, selectedTags]); // executeSearch를 dependency에서 제거하여 불필요한 재실행 방지
+
+  // 검색 모드에서 페이지 변경 시 검색 결과 다시 로드
+  useEffect(() => {
+    if (!isSearchMode) return;
+    
+    let isCancelled = false;
+    
+    const fetchSearchResults = async () => {
+      try {
+        const { data, count, error } = await searchPostsWithPageNumber(
+          searchKeyword, 
+          selectedTags, 
+          currentPage, 
+          POSTS_PER_PAGE, 
+          selectedCategoryKey
+        );
+        
+        if (isCancelled) return;
+        
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          setPosts(data);
+          setSearchTotalCount(count || 0);
+        } else {
+          setPosts([]);
+          setSearchTotalCount(0);
+        }
+      } catch (error) {
+        if (!isCancelled) {
+          console.error('검색 결과를 불러오는데 실패했습니다:', error);
+        }
+      }
+    };
+
+    fetchSearchResults();
+    
+    return () => {
+      isCancelled = true;
+    };
+  }, [currentPage, isSearchMode, searchKeyword, selectedTags, selectedCategoryKey]);
 
 
 
@@ -265,44 +271,20 @@ const BlogList = () => {
   };
 
   // 카테고리 선택 핸들러
-  const handleCategoryClick = async (categoryKey) => {
+  const handleCategoryClick = (categoryKey) => {
     setSelectedCategoryKey(categoryKey);
     setSearchKeyword('');
     setSelectedTags([]);
     setIsSearchMode(false);
-    
-    try {
-      setLoading(true);
-      const { data, error } = await getPostsWithPagination(null, 5, categoryKey);
-      
-      if (error) throw error;
-      
-      if (data && data.length > 0) {
-        setPosts(data);
-        setFilteredPosts(data);
-        setLastCreatedAt(data[data.length - 1].created_at);
-        setHasMore(data.length === 5);
-        
-        // 모든 태그 수집
-        const tags = new Set();
-        data.forEach(post => {
-          if (post.tags && Array.isArray(post.tags)) {
-            post.tags.forEach(tag => tags.add(tag));
-          }
-        });
-        setAllTags(Array.from(tags).sort());
-      } else {
-        setPosts([]);
-        setFilteredPosts([]);
-        setLastCreatedAt(null);
-        setHasMore(false);
-        setAllTags([]);
-      }
-    } catch (error) {
-      console.error('카테고리 필터링에 실패했습니다:', error);
-    } finally {
-      setLoading(false);
-    }
+    setCurrentPage(1); // 카테고리 변경 시 첫 페이지로 리셋
+    // 데이터 로딩은 useEffect에서 처리 (깜빡임 방지)
+  };
+
+  // 페이지 변경 핸들러
+  const handlePageChange = (event, value) => {
+    setCurrentPage(value);
+    // 페이지 상단으로 스크롤
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // 날짜 포맷팅
@@ -350,24 +332,8 @@ const BlogList = () => {
             </Paper>
           ))}
           
-          {/* 로딩 상태 */}
-          {loadingMore && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
-              <CircularProgress />
-            </Box>
-          )}
-          
-          {/* 더 이상 로드할 게시글이 없음 */}
-          {!hasMore && !loadingMore && filteredPosts.length > 0 && (
-            <Box sx={{ textAlign: 'center', py: 3, color: 'text.secondary' }}>
-              <Typography variant="body2">
-                모든 게시글을 불러왔습니다.
-              </Typography>
-            </Box>
-          )}
-          
           {/* 검색 결과가 없음 */}
-          {!loading && filteredPosts.length === 0 && isSearchMode && (
+          {!loading && posts.length === 0 && isSearchMode && (
             <Box sx={{ textAlign: 'center', py: 3, color: 'text.secondary' }}>
               <Typography variant="body2">
                 검색 결과가 없습니다.
@@ -426,6 +392,12 @@ const BlogList = () => {
           placeholder="게시글 검색..."
           value={searchKeyword}
           onChange={(e) => setSearchKeyword(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              executeSearch();
+            }
+          }}
           size="small"
           sx={{ minWidth: 200 }}
           InputProps={{
@@ -437,14 +409,28 @@ const BlogList = () => {
           }}
         />
         
+        {/* 검색 실행 버튼 */}
+        <IconButton 
+          onClick={() => executeSearch()}
+          sx={{ 
+            border: '1px solid #ddd',
+            '&:hover': { backgroundColor: '#f5f5f5' }
+          }}
+          title="검색"
+        >
+          <SearchIcon />
+        </IconButton>
+        
+        {/* 태그 필터 모달 열기 버튼 */}
         <IconButton 
           onClick={handleSearchModalOpen}
           sx={{ 
             border: '1px solid #ddd',
             '&:hover': { backgroundColor: '#f5f5f5' }
           }}
+          title="태그 필터"
         >
-          <SearchIcon />
+          <FilterListIcon />
         </IconButton>
 
         {selectedTags.length > 0 && (
@@ -459,11 +445,10 @@ const BlogList = () => {
 
       {/* 게시글 목록 */}
       <Box sx={{ display: 'grid', gap: 3 }}>
-        {(filteredPosts.length > 0 ? filteredPosts : posts).map((post, index) => (
+        {posts.map((post) => (
           <Paper 
             key={post.id} 
             elevation={1} 
-            ref={index === (filteredPosts.length > 0 ? filteredPosts : posts).length - 1 ? lastElementRef : null}
             sx={{ 
               p: 3, 
               cursor: 'pointer',
@@ -508,6 +493,21 @@ const BlogList = () => {
           </Paper>
         ))}
       </Box>
+
+      {/* 페이지네이션 */}
+      {!loading && posts.length > 0 && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 2 }}>
+          <Pagination
+            count={Math.ceil((isSearchMode ? searchTotalCount : totalCount) / POSTS_PER_PAGE)}
+            page={currentPage}
+            onChange={handlePageChange}
+            color="primary"
+            size="large"
+            showFirstButton
+            showLastButton
+          />
+        </Box>
+      )}
 
       {/* 검색 모달 */}
       <Modal
