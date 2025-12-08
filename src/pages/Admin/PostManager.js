@@ -20,16 +20,21 @@ import {
   Select,
   MenuItem,
   FormControl,
-  InputLabel
+  InputLabel,
+  Pagination,
+  InputAdornment
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import LogoutIcon from '@mui/icons-material/Logout';
+import SearchIcon from '@mui/icons-material/Search';
 import MDEditor from '@uiw/react-md-editor';
 import { 
-  getAllPosts, 
+  getAllPostsWithPageNumber,
+  getPostById,
+  getPostCountBeforeCreatedAt,
   createPost, 
   updatePost, 
   deletePost, 
@@ -60,6 +65,11 @@ const PostManager = () => {
   const [loading, setLoading] = useState(true);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [cursorPosition, setCursorPosition] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [postIdSearch, setPostIdSearch] = useState(''); // 포스트 번호 검색
+  const [highlightedPostId, setHighlightedPostId] = useState(null); // 하이라이트할 포스트 ID
+  const POSTS_PER_PAGE = 20;
 
   // 이미지 업로드 훅 사용
   const {
@@ -71,24 +81,102 @@ const PostManager = () => {
     cleanup
   } = useImageUpload();
 
-  // 모든 포스트 조회
+  // 포스트 조회 (페이지네이션)
   const fetchPosts = useCallback(async () => {
     try {
-      const { data, error } = await getAllPosts();
+      setLoading(true);
+      const { data, count, error } = await getAllPostsWithPageNumber(currentPage, POSTS_PER_PAGE);
       if (error) throw error;
       setPosts(data || []);
+      setTotalCount(count || 0);
     } catch (error) {
       showSnackbar('포스트 조회 중 오류가 발생했습니다.', 'error');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentPage]);
 
-  // 다음 id 계산 (자동 증가)
+  // 다음 id 계산 (자동 증가) - 전체 포스트 기준으로 계산하기 위해 별도 조회 필요
   const getNextId = () => {
+    // 현재 페이지의 포스트만으로는 정확한 다음 ID를 알 수 없으므로
+    // 간단히 현재 페이지의 최대 ID + 1을 반환
     if (posts.length === 0) return 1;
     const maxId = Math.max(...posts.map(post => parseInt(post.id) || 0));
     return maxId + 1;
+  };
+
+  // 포스트 번호로 조회 - 리스팅에서 찾아서 하이라이트
+  const handleSearchByPostId = async () => {
+    const postId = parseInt(postIdSearch.trim());
+    if (!postId || isNaN(postId)) {
+      showSnackbar('유효한 포스트 번호를 입력해주세요.', 'error');
+      return;
+    }
+
+    try {
+      const { data, error } = await getPostById(postId);
+      if (error) throw error;
+      
+      if (!data) {
+        showSnackbar(`포스트 #${postId}를 찾을 수 없습니다.`, 'error');
+        return;
+      }
+
+      // 포스트를 찾았으면 하이라이트 설정
+      setHighlightedPostId(postId);
+      setPostIdSearch(''); // 검색 필드 초기화
+      
+      // 현재 페이지에 해당 포스트가 있는지 확인
+      const isInCurrentPage = posts.some(p => p.id === postId);
+      
+      if (!isInCurrentPage) {
+        // 포스트가 현재 페이지에 없으면, SQL COUNT 쿼리로 효율적으로 페이지 계산
+        // created_at 기준 내림차순 정렬이므로, 해당 포스트보다 최신인 포스트 개수를 세어서 페이지 계산
+        const { count: newerPostCount, error: countError } = await getPostCountBeforeCreatedAt(data.created_at);
+        
+        if (countError) {
+          showSnackbar('포스트 위치를 찾는 중 오류가 발생했습니다.', 'error');
+          setHighlightedPostId(null);
+          return;
+        }
+        
+        // 해당 포스트보다 최신인 포스트가 newerPostCount개 있으므로,
+        // 해당 포스트는 (newerPostCount + 1)번째 포스트입니다.
+        // 페이지 계산: (newerPostCount / POSTS_PER_PAGE) + 1
+        const calculatedPage = Math.floor(newerPostCount / POSTS_PER_PAGE) + 1;
+        
+        setCurrentPage(calculatedPage);
+        // 페이지 변경 후 포스트가 로드되면 하이라이트 및 스크롤
+        setTimeout(() => {
+          setHighlightedPostId(postId);
+          setTimeout(() => {
+            const element = document.getElementById(`post-${postId}`);
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }, 200);
+        }, 300);
+        showSnackbar(`포스트 #${postId}를 찾았습니다. (${calculatedPage}페이지)`, 'success');
+      } else {
+        // 현재 페이지에 있으면 하이라이트만
+        showSnackbar(`포스트 #${postId}를 찾았습니다.`, 'success');
+        // 해당 포스트로 스크롤
+        setTimeout(() => {
+          const element = document.getElementById(`post-${postId}`);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
+      }
+      
+      // 5초 후 하이라이트 제거
+      setTimeout(() => {
+        setHighlightedPostId(null);
+      }, 5000);
+    } catch (error) {
+      showSnackbar('포스트 조회 중 오류가 발생했습니다.', 'error');
+      setHighlightedPostId(null);
+    }
   };
 
   // 새 포스트 생성
@@ -146,7 +234,11 @@ const PostManager = () => {
         }
       }
 
-      setPosts([data, ...posts]);
+      // 새 포스트 생성 후 첫 페이지로 이동하여 새 포스트 확인
+      setCurrentPage(1);
+      // 첫 페이지를 다시 로드
+      await fetchPosts();
+      
       setNewPost({
         title: '',
         content: '',
@@ -188,7 +280,7 @@ const PostManager = () => {
         images: tempImages.length > 0 ? tempImages : (editingPost.images || [])
       };
 
-      const { data, error } = await updatePost(editingPost.id, updateData);
+      const { error } = await updatePost(editingPost.id, updateData);
       if (error) throw error;
 
       // 임시 이미지를 영구 저장으로 이동
@@ -221,9 +313,9 @@ const PostManager = () => {
         }
       }
 
-      setPosts(posts.map(post => 
-        post.id === editingPost.id ? data : post
-      ));
+      // 포스트 수정 후 현재 페이지 다시 로드
+      await fetchPosts();
+      
       setEditingPost(null);
       setEditingTagsInput(''); // 태그 입력 필드 초기화
       setOpenDialog(false);
@@ -245,7 +337,8 @@ const PostManager = () => {
       const { error } = await deletePost(id);
       if (error) throw error;
 
-      setPosts(posts.filter(post => post.id !== id));
+      // 삭제 후 현재 페이지 다시 로드
+      await fetchPosts();
       showSnackbar('포스트가 삭제되었습니다.', 'success');
     } catch (error) {
       showSnackbar('포스트 삭제 중 오류가 발생했습니다.', 'error');
@@ -255,12 +348,11 @@ const PostManager = () => {
   // 발행 상태 변경
   const handleTogglePublish = async (id, currentStatus) => {
     try {
-      const { data, error } = await togglePostPublish(id, !currentStatus);
+      const { error } = await togglePostPublish(id, !currentStatus);
       if (error) throw error;
 
-      setPosts(posts.map(post => 
-        post.id === id ? data : post
-      ));
+      // 상태 변경 후 현재 페이지 다시 로드
+      await fetchPosts();
       showSnackbar(`포스트가 ${!currentStatus ? '발행' : '임시저장'}되었습니다.`, 'success');
     } catch (error) {
       showSnackbar('상태 변경 중 오류가 발생했습니다.', 'error');
@@ -410,6 +502,14 @@ const PostManager = () => {
     fetchPosts();
   }, [fetchPosts]);
 
+  // 페이지 변경 핸들러
+  const handlePageChange = (event, value) => {
+    setCurrentPage(value);
+    setHighlightedPostId(null); // 페이지 변경 시 하이라이트 제거
+    // 페이지 상단으로 스크롤
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   if (loading) {
     return (
       <Box sx={{ p: 4, textAlign: 'center' }}>
@@ -427,13 +527,11 @@ const PostManager = () => {
       
       const { error } = await signOut();
       if (error) {
-        console.error('❌ 로그아웃 실패:', error.message);
         showSnackbar('로그아웃 중 오류가 발생했습니다.', 'error');
       } else {
 
       }
     } catch (error) {
-      console.error('💥 로그아웃 중 예외 발생:', error);
       showSnackbar('로그아웃 중 오류가 발생했습니다.', 'error');
     }
   };
@@ -592,20 +690,63 @@ const PostManager = () => {
 
       {/* 포스트 목록 */}
       <Box>
-        <Typography variant="h6" sx={{ mb: 2 }}>
-          포스트 목록 ({posts.length}개)
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h6">
+            포스트 목록 (전체 {totalCount}개)
+          </Typography>
+          
+          {/* 포스트 번호로 조회 */}
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            <TextField
+              label="포스트 번호로 조회"
+              value={postIdSearch}
+              onChange={(e) => setPostIdSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleSearchByPostId();
+                }
+              }}
+              size="small"
+              sx={{ width: 200 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+              placeholder="예: 29"
+            />
+            <Button
+              variant="outlined"
+              onClick={handleSearchByPostId}
+              size="small"
+            >
+              조회
+            </Button>
+          </Box>
+        </Box>
         <List>
           {posts.map((post) => (
             <ListItem
               key={post.id}
+              id={`post-${post.id}`}
               sx={{ 
-                border: '1px solid #eee', 
+                border: highlightedPostId === post.id ? '3px solid #1976d2' : '1px solid #eee',
                 mb: 1, 
                 borderRadius: 1,
                 display: 'flex',
                 justifyContent: 'space-between',
-                alignItems: 'flex-start'
+                alignItems: 'flex-start',
+                backgroundColor: highlightedPostId === post.id ? '#e3f2fd' : 'transparent',
+                transition: 'all 0.3s ease',
+                animation: highlightedPostId === post.id ? 'pulse 0.5s ease-in-out' : 'none',
+                '@keyframes pulse': {
+                  '0%': { transform: 'scale(1)' },
+                  '50%': { transform: 'scale(1.02)' },
+                  '100%': { transform: 'scale(1)' }
+                }
               }}
             >
               <Box sx={{ flex: 1 }}>
@@ -674,6 +815,21 @@ const PostManager = () => {
             </ListItem>
           ))}
         </List>
+
+        {/* 페이지네이션 */}
+        {!loading && posts.length > 0 && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 2 }}>
+            <Pagination
+              count={Math.ceil(totalCount / POSTS_PER_PAGE)}
+              page={currentPage}
+              onChange={handlePageChange}
+              color="primary"
+              size="large"
+              showFirstButton
+              showLastButton
+            />
+          </Box>
+        )}
       </Box>
 
       {/* 수정 다이얼로그 */}
