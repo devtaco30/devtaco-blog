@@ -792,7 +792,7 @@ const PostManager = () => {
                     setEditingPost({
                       ...post,
                       category_key: post.category_key || 'general',
-                      is_published: post.is_published === true, // boolean으로 명시적 변환
+                      is_published: Boolean(post.is_published), // boolean으로 명시적 변환
                       is_featured: post.is_featured !== undefined ? post.is_featured : true,
                       excerpt: Array.isArray(post.excerpt) ? [...post.excerpt, '', '', ''].slice(0, 3) : ['', '', '']
                     });
