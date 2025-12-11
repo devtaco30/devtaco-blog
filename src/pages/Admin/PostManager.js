@@ -276,6 +276,7 @@ const PostManager = () => {
         excerpt: cleanExcerpt,
         tags: editingPost.tags.length > 0 ? editingPost.tags : [],
         category_key: editingPost.category_key || 'general', // 빈 값 방지
+        is_published: Boolean(editingPost.is_published), // 명시적으로 boolean 변환
         is_featured: editingPost.is_featured !== undefined ? editingPost.is_featured : true, // Home 노출 여부
         images: tempImages.length > 0 ? tempImages : (editingPost.images || [])
       };
@@ -693,7 +694,7 @@ const PostManager = () => {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="h6">
             포스트 목록 (전체 {totalCount}개)
-          </Typography>
+        </Typography>
           
           {/* 포스트 번호로 조회 */}
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
@@ -791,6 +792,7 @@ const PostManager = () => {
                     setEditingPost({
                       ...post,
                       category_key: post.category_key || 'general',
+                      is_published: post.is_published === true, // boolean으로 명시적 변환
                       is_featured: post.is_featured !== undefined ? post.is_featured : true,
                       excerpt: Array.isArray(post.excerpt) ? [...post.excerpt, '', '', ''].slice(0, 3) : ['', '', '']
                     });
@@ -915,8 +917,10 @@ const PostManager = () => {
             <FormControlLabel
               control={
                 <Switch
-                  checked={editingPost?.is_published || false}
-                  onChange={(e) => setEditingPost({ ...editingPost, is_published: e.target.checked })}
+                  checked={Boolean(editingPost?.is_published)}
+                  onChange={(e) => {
+                    setEditingPost({ ...editingPost, is_published: Boolean(e.target.checked) });
+                  }}
                 />
               }
               label="발행"

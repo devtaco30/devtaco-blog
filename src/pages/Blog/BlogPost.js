@@ -52,11 +52,17 @@ const BlogPost = () => {
       try {
         const { data, error } = await getPostById(id);
         if (error) throw error;
-        setPost(data);
         
+        // 발행되지 않은 포스트는 접근 불가
+        if (data && !data.is_published) {
+          setPost(null);
+        } else {
+          setPost(data);
+        }
 
       } catch (error) {
         console.error('게시글을 불러오는데 실패했습니다:', error);
+        setPost(null);
       } finally {
         setLoading(false);
       }
