@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useParams, Link as RouterLink } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useParams, Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import rehypeKatex from 'rehype-katex';
@@ -14,17 +14,36 @@ import {
   Link,
   Skeleton,
   Breadcrumbs,
-  Paper
+  Paper,
+  Button,
+  Grid,
+  Divider,
+  Fab,
+  Fade
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { getPostById, incrementViewCount } from '../../services/posts';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import { getPostById, incrementViewCount, getAdjacentPosts, getRelatedPostsByCategory } from '../../services/posts';
 import ImageModal from '../../components/ui/ImageModal';
 
 const BlogPost = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [viewCountIncremented, setViewCountIncremented] = useState(false);
+  const [adjacentPosts, setAdjacentPosts] = useState({ prev: null, next: null });
+  const [relatedPosts, setRelatedPosts] = useState([]);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  
+  // URL에서 필터 조건 읽기 (useMemo로 메모이제이션하여 불필요한 재생성 방지)
+  const categoryFromUrl = searchParams.get('category') || 'all';
+  const searchFromUrl = searchParams.get('search') || '';
+  const tagsFromUrl = useMemo(() => {
+    return searchParams.get('tags') ? searchParams.get('tags').split(',') : [];
+  }, [searchParams]);
   
   // 이미지 모달 상태
   const [imageModal, setImageModal] = useState({
@@ -107,6 +126,258 @@ const BlogPost = () => {
       }
     }
   }, [post, id, loading, viewCountIncremented]);
+
+  // 이전글/다음글 조회
+  useEffect(() => {
+    if (!post || !post.published_at) return;
+
+    const fetchAdjacentPosts = async () => {
+      const { prev, next, error } = await getAdjacentPosts(
+        post.id,
+        post.published_at,
+        categoryFromUrl,
+        searchFromUrl,
+        tagsFromUrl
+      );
+
+      if (!error) {
+        setAdjacentPosts({ prev, next });
+      }
+    };
+
+    fetchAdjacentPosts();
+  }, [post, categoryFromUrl, searchFromUrl, tagsFromUrl]);
+
+  // 같은 카테고리의 관련 포스트 조회
+  useEffect(() => {
+    if (!post) return;
+
+    const fetchRelatedPosts = async () => {
+      const { data, error } = await getRelatedPostsByCategory(
+        post.id,
+        categoryFromUrl,
+        6
+      );
+
+      if (!error && data) {
+        setRelatedPosts(data);
+      }
+    };
+
+    fetchRelatedPosts();
+  }, [post, categoryFromUrl]);
+
+  // 스크롤 위치 감지
+  useEffect(() => {
+    const handleScroll = () => {
+      // 300px 이상 스크롤되면 버튼 표시
+      setShowScrollTop(window.scrollY > 300);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // 맨 위로 스크롤
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+
+  // 포스트 네비게이션 컴포넌트
+  const PostNavigation = ({ prev, next }) => {
+    const handleNavigate = (postId) => {
+      // 현재 URL 파라미터를 유지하면서 이동
+      const params = new URLSearchParams(searchParams);
+      navigate(`/posts/${postId}?${params.toString()}`);
+    };
+
+    if (!prev && !next) return null;
+
+    return (
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        gap: 2,
+        my: 3 
+      }}>
+        {prev ? (
+          <Button
+            variant="outlined"
+            startIcon={<ArrowBackIcon />}
+            onClick={() => handleNavigate(prev.id)}
+            sx={{
+              flex: 1,
+              justifyContent: 'flex-start',
+              textAlign: 'left',
+              borderColor: '#000000',
+              color: '#000000',
+              '&:hover': {
+                borderColor: '#000000',
+                backgroundColor: '#f5f5f5'
+              }
+            }}
+          >
+            <Box>
+              <Typography variant="caption" display="block" sx={{ color: 'text.secondary' }}>
+                이전글
+              </Typography>
+              <Typography variant="body2" sx={{ 
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
+              }}>
+                {prev.title}
+              </Typography>
+            </Box>
+          </Button>
+        ) : (
+          <Box sx={{ flex: 1 }} />
+        )}
+
+        {next ? (
+          <Button
+            variant="outlined"
+            endIcon={<ArrowForwardIcon />}
+            onClick={() => handleNavigate(next.id)}
+            sx={{
+              flex: 1,
+              justifyContent: 'flex-end',
+              textAlign: 'right',
+              borderColor: '#000000',
+              color: '#000000',
+              '&:hover': {
+                borderColor: '#000000',
+                backgroundColor: '#f5f5f5'
+              }
+            }}
+          >
+            <Box>
+              <Typography variant="caption" display="block" sx={{ color: 'text.secondary' }}>
+                다음글
+              </Typography>
+              <Typography variant="body2" sx={{ 
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
+              }}>
+                {next.title}
+              </Typography>
+            </Box>
+          </Button>
+        ) : (
+          <Box sx={{ flex: 1 }} />
+        )}
+      </Box>
+    );
+  };
+
+  // 관련 포스트 리스트 컴포넌트
+  const RelatedPosts = ({ posts }) => {
+    if (!posts || posts.length === 0) return null;
+
+    const handlePostClick = (postId) => {
+      const params = new URLSearchParams(searchParams);
+      navigate(`/posts/${postId}?${params.toString()}`);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    // 날짜 포맷팅
+    const formatDate = (timestamp) => {
+      if (!timestamp) return '';
+      
+      let date;
+      if (typeof timestamp === 'bigint' || typeof timestamp === 'number') {
+        date = new Date(Number(timestamp));
+      } else {
+        date = new Date(timestamp);
+      }
+      
+      return date.toLocaleDateString('ko-KR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    };
+
+    return (
+      <Box sx={{ mt: 6, mb: 4 }}>
+        <Divider sx={{ mb: 4 }} />
+        <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold' }}>
+          같은 카테고리의 다른 글
+        </Typography>
+        <Grid container spacing={2}>
+          {posts.map((relatedPost) => (
+            <Grid item xs={12} sm={6} key={relatedPost.id}>
+              <Paper
+                elevation={1}
+                sx={{
+                  p: 2,
+                  cursor: 'pointer',
+                  height: '100%',
+                  transition: 'all 0.2s',
+                  '&:hover': {
+                    elevation: 3,
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                  }
+                }}
+                onClick={() => handlePostClick(relatedPost.id)}
+              >
+                <Typography variant="h6" sx={{ mb: 1, fontWeight: 'bold', fontSize: '1rem' }}>
+                  {relatedPost.title}
+                </Typography>
+                
+                {relatedPost.excerpt && Array.isArray(relatedPost.excerpt) && relatedPost.excerpt.length > 0 && (
+                  <Typography 
+                    variant="body2" 
+                    color="text.secondary" 
+                    sx={{ 
+                      mb: 1.5,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      lineHeight: 1.5
+                    }}
+                  >
+                    {relatedPost.excerpt.filter(item => item.trim()).join(' | ')}
+                  </Typography>
+                )}
+                
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
+                  {relatedPost.tags && Array.isArray(relatedPost.tags) && relatedPost.tags.slice(0, 3).map((tag, index) => (
+                    <Chip 
+                      key={index} 
+                      label={tag} 
+                      size="small" 
+                      variant="outlined"
+                      sx={{ fontSize: '0.7rem', height: '20px' }}
+                    />
+                  ))}
+                  {relatedPost.tags && relatedPost.tags.length > 3 && (
+                    <Chip 
+                      label={`+${relatedPost.tags.length - 3}`} 
+                      size="small" 
+                      variant="outlined"
+                      sx={{ fontSize: '0.7rem', height: '20px' }}
+                    />
+                  )}
+                </Box>
+                
+                <Typography variant="caption" color="text.secondary">
+                  {formatDate(relatedPost.published_at)}
+                </Typography>
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
+    );
+  };
 
   // Mermaid 다이어그램 렌더링을 위한 컴포넌트
   const MermaidDiagram = ({ children }) => {
@@ -385,7 +656,7 @@ const BlogPost = () => {
         </Typography>
         <Link 
           component={RouterLink} 
-          to="/posts"
+          to={`/posts?${searchParams.toString()}`}
           sx={{ 
             textDecoration: 'none',
             color: '#000000',
@@ -425,7 +696,7 @@ const BlogPost = () => {
       <Breadcrumbs sx={{ mb: 3 }}>
         <Link 
           component={RouterLink} 
-          to="/posts"
+          to={`/posts?${searchParams.toString()}`}
           sx={{ 
             textDecoration: 'none',
             color: 'text.secondary',
@@ -436,6 +707,9 @@ const BlogPost = () => {
         </Link>
         <Typography color="text.primary">{post.title}</Typography>
       </Breadcrumbs>
+
+      {/* 상단 포스트 네비게이션 */}
+      <PostNavigation prev={adjacentPosts.prev} next={adjacentPosts.next} />
 
       {/* 게시글 헤더 */}
       <Paper elevation={1} sx={{ p: 3, mb: 4 }}>
@@ -624,11 +898,14 @@ const BlogPost = () => {
         </Box>
       </Paper>
 
+      {/* 같은 카테고리의 다른 글 */}
+      <RelatedPosts posts={relatedPosts} />
+
       {/* 뒤로가기 버튼 */}
-      <Box sx={{ mt: 4, textAlign: 'center' }}>
+      <Box sx={{ mt: 8, mb: 4, textAlign: 'center' }}>
         <Link 
           component={RouterLink} 
-          to="/posts"
+          to={`/posts?${searchParams.toString()}`}
           sx={{ 
             textDecoration: 'none',
             color: '#000000',
@@ -653,6 +930,29 @@ const BlogPost = () => {
         src={imageModal.src}
         alt={imageModal.alt}
       />
+
+      {/* 맨 위로 버튼 */}
+      <Fade in={showScrollTop}>
+        <Fab
+          color="primary"
+          size="medium"
+          aria-label="scroll to top"
+          onClick={scrollToTop}
+          sx={{
+            position: 'fixed',
+            bottom: 32,
+            right: 32,
+            backgroundColor: '#000000',
+            color: '#ffffff',
+            '&:hover': {
+              backgroundColor: '#333333'
+            },
+            zIndex: 1000
+          }}
+        >
+          <KeyboardArrowUpIcon />
+        </Fab>
+      </Fade>
     </Box>
   );
 };

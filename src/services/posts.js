@@ -340,3 +340,111 @@ export const getPostCountBeforeCreatedAt = async (targetCreatedAt) => {
     return { count: 0, error };
   }
 };
+
+/**
+ * 특정 포스트의 이전/다음 포스트 조회 (같은 필터 조건 내)
+ * @param {string} currentPostId - 현재 포스트 ID
+ * @param {string|number|bigint} currentPublishedAt - 현재 포스트의 published_at
+ * @param {string|null} categoryKey - 카테고리 키
+ * @param {string} searchTerm - 검색어
+ * @param {Array<string>} tags - 태그 배열
+ * @returns {Promise<{prev: Object|null, next: Object|null, error: Error|null}>}
+ */
+export const getAdjacentPosts = async (currentPostId, currentPublishedAt, categoryKey = null, searchTerm = '', tags = []) => {
+  try {
+    // published_at을 숫자(timestamp)로 변환
+    let publishedAtTimestamp;
+    if (typeof currentPublishedAt === 'bigint' || typeof currentPublishedAt === 'number') {
+      publishedAtTimestamp = Number(currentPublishedAt);
+    } else {
+      // ISO 문자열이나 Date 객체인 경우
+      publishedAtTimestamp = new Date(currentPublishedAt).getTime();
+    }
+
+    // 이전 포스트 조회 (현재 포스트보다 최신, published_at 기준 내림차순에서 바로 위)
+    let prevQuery = supabase
+      .from('posts')
+      .select('id, title')
+      .eq('is_published', true)
+      .gt('published_at', publishedAtTimestamp)
+      .order('published_at', { ascending: true })
+      .limit(1);
+
+    // 다음 포스트 조회 (현재 포스트보다 이전, published_at 기준 내림차순에서 바로 아래)
+    let nextQuery = supabase
+      .from('posts')
+      .select('id, title')
+      .eq('is_published', true)
+      .lt('published_at', publishedAtTimestamp)
+      .order('published_at', { ascending: false })
+      .limit(1);
+
+    // 카테고리 필터링
+    if (categoryKey && categoryKey !== 'all') {
+      prevQuery = prevQuery.eq('category_key', categoryKey);
+      nextQuery = nextQuery.eq('category_key', categoryKey);
+    }
+
+    // 검색어 필터링
+    if (searchTerm && searchTerm.trim()) {
+      const searchFilter = `title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%`;
+      prevQuery = prevQuery.or(searchFilter);
+      nextQuery = nextQuery.or(searchFilter);
+    }
+
+    // 태그 필터링
+    if (tags && tags.length > 0) {
+      prevQuery = prevQuery.overlaps('tags', tags);
+      nextQuery = nextQuery.overlaps('tags', tags);
+    }
+
+    const [prevResult, nextResult] = await Promise.all([
+      prevQuery,
+      nextQuery
+    ]);
+
+    if (prevResult.error) throw prevResult.error;
+    if (nextResult.error) throw nextResult.error;
+
+    return {
+      prev: prevResult.data?.[0] || null,
+      next: nextResult.data?.[0] || null,
+      error: null
+    };
+  } catch (error) {
+    console.error('Error fetching adjacent posts:', error);
+    return { prev: null, next: null, error };
+  }
+};
+
+/**
+ * 같은 카테고리의 최신 포스트 조회 (현재 포스트 제외)
+ * @param {string} currentPostId - 현재 포스트 ID (제외할 포스트)
+ * @param {string|null} categoryKey - 카테고리 키
+ * @param {number} limit - 가져올 포스트 개수
+ * @returns {Promise<{data: Array|null, error: Error|null}>}
+ */
+export const getRelatedPostsByCategory = async (currentPostId, categoryKey = null, limit = 6) => {
+  try {
+    let query = supabase
+      .from('posts')
+      .select('id, title, excerpt, tags, published_at')
+      .eq('is_published', true)
+      .neq('id', currentPostId)
+      .order('published_at', { ascending: false })
+      .limit(limit);
+
+    // 카테고리 필터링
+    if (categoryKey && categoryKey !== 'all') {
+      query = query.eq('category_key', categoryKey);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+    return { data: data || [], error: null };
+  } catch (error) {
+    console.error('Error fetching related posts:', error);
+    return { data: null, error };
+  }
+};

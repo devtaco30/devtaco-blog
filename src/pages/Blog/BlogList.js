@@ -12,7 +12,7 @@ import {
   Paper,
   Pagination
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import { getPostsWithPageNumber, searchPostsWithPageNumber } from '../../services/posts';
@@ -27,6 +27,9 @@ const ALL_CATEGORY = {
 };
 
 const BlogList = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+
   const [posts, setPosts] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
   const [allTags, setAllTags] = useState([]);
@@ -43,8 +46,37 @@ const BlogList = () => {
   const [searchTotalCount, setSearchTotalCount] = useState(0);
   
   const POSTS_PER_PAGE = 10;
-  const navigate = useNavigate();
 
+  // URL 파라미터 변경 감지 및 state 동기화
+  useEffect(() => {
+    const pageFromUrl = parseInt(searchParams.get('page')) || 1;
+    const categoryFromUrl = searchParams.get('category') || 'all';
+    const searchFromUrl = searchParams.get('search') || '';
+    const tagsFromUrl = searchParams.get('tags') ? searchParams.get('tags').split(',') : [];
+
+    setCurrentPage(pageFromUrl);
+    setSelectedCategoryKey(categoryFromUrl);
+    setSearchKeyword(searchFromUrl);
+    setSelectedTags(tagsFromUrl);
+    setIsSearchMode(searchFromUrl !== '' || tagsFromUrl.length > 0);
+  }, [searchParams]);
+
+  // URL 업데이트 헬퍼 함수
+  const updateUrlParams = useCallback((updates) => {
+    const newParams = new URLSearchParams(searchParams);
+    
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === null || value === undefined || value === '' || (Array.isArray(value) && value.length === 0)) {
+        newParams.delete(key);
+      } else if (Array.isArray(value)) {
+        newParams.set(key, value.join(','));
+      } else {
+        newParams.set(key, value.toString());
+      }
+    });
+
+    setSearchParams(newParams, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   // 카테고리 조회
   useEffect(() => {
@@ -150,14 +182,23 @@ const BlogList = () => {
     if (!searchKeyword.trim() && selectedTags.length === 0) {
       // 검색 조건이 없으면 일반 모드로 전환
       setIsSearchMode(false);
-      setCurrentPage(1);
+      updateUrlParams({ 
+        page: 1,
+        search: null,
+        tags: null
+      });
       return;
     }
 
     try {
       // 검색 모드로 전환
       setIsSearchMode(true);
-      setCurrentPage(1); // 검색 시 첫 페이지로 리셋
+      
+      updateUrlParams({ 
+        page: 1,
+        search: searchKeyword || null,
+        tags: selectedTags.length > 0 ? selectedTags : null
+      });
       
       const { data, count, error } = await searchPostsWithPageNumber(
         searchKeyword, 
@@ -189,7 +230,7 @@ const BlogList = () => {
     } catch (error) {
       console.error('검색에 실패했습니다:', error);
     }
-  }, [searchKeyword, selectedTags, selectedCategoryKey]);
+  }, [searchKeyword, selectedTags, selectedCategoryKey, updateUrlParams]);
 
   // 검색어나 태그 변경 시 검색 실행
   useEffect(() => {
@@ -250,12 +291,63 @@ const BlogList = () => {
   );
 
   const handleTagClick = (tag) => {
-    setSelectedTags(prev => 
-      prev.includes(tag) 
-        ? prev.filter(t => t !== tag)
-        : [...prev, tag]
-    );
+    const newTags = selectedTags.includes(tag) 
+      ? selectedTags.filter(t => t !== tag)
+      : [...selectedTags, tag];
+    
+    setSelectedTags(newTags);
     setIsSearchModalOpen(false);
+    
+    // 태그 변경 시 즉시 검색 실행
+    const newSearchKeyword = searchKeyword;
+    
+    if (newTags.length === 0 && !newSearchKeyword.trim()) {
+      // 검색 조건이 없으면 일반 모드로 전환
+      setIsSearchMode(false);
+      updateUrlParams({ 
+        page: 1,
+        search: null,
+        tags: null
+      });
+    } else {
+      // 검색 모드 유지
+      setIsSearchMode(true);
+      updateUrlParams({ 
+        page: 1,
+        search: newSearchKeyword || null,
+        tags: newTags.length > 0 ? newTags : null
+      });
+      
+      // 검색 API 호출
+      searchPostsWithPageNumber(
+        newSearchKeyword,
+        newTags,
+        1,
+        POSTS_PER_PAGE,
+        selectedCategoryKey
+      ).then(({ data, count, error }) => {
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          setPosts(data);
+          setSearchTotalCount(count || 0);
+          
+          const tags = new Set();
+          data.forEach(post => {
+            if (post.tags && Array.isArray(post.tags)) {
+              post.tags.forEach(tag => tags.add(tag));
+            }
+          });
+          setAllTags(Array.from(tags).sort());
+        } else {
+          setPosts([]);
+          setSearchTotalCount(0);
+          setAllTags([]);
+        }
+      }).catch(error => {
+        console.error('검색에 실패했습니다:', error);
+      });
+    }
   };
 
   const handleSearchModalOpen = () => {
@@ -267,7 +359,9 @@ const BlogList = () => {
   };
 
   const handlePostClick = (post) => {
-    navigate(`/posts/${post.id}`);
+    // 현재 URL 파라미터를 유지하면서 포스트로 이동
+    const params = new URLSearchParams(searchParams);
+    navigate(`/posts/${post.id}?${params.toString()}`);
   };
 
   // 카테고리 선택 핸들러
@@ -276,14 +370,20 @@ const BlogList = () => {
     setSearchKeyword('');
     setSelectedTags([]);
     setIsSearchMode(false);
-    setCurrentPage(1); // 카테고리 변경 시 첫 페이지로 리셋
-    // 데이터 로딩은 useEffect에서 처리 (깜빡임 방지)
+    setCurrentPage(1);
+    
+    updateUrlParams({ 
+      page: 1,
+      category: categoryKey === 'all' ? null : categoryKey,
+      search: null,
+      tags: null
+    });
   };
 
   // 페이지 변경 핸들러
   const handlePageChange = (event, value) => {
     setCurrentPage(value);
-    // 페이지 상단으로 스크롤
+    updateUrlParams({ page: value });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -436,7 +536,15 @@ const BlogList = () => {
         {selectedTags.length > 0 && (
           <Chip 
             label={`선택된 태그: ${selectedTags.length}개`}
-            onDelete={() => setSelectedTags([])}
+            onDelete={() => {
+              setSelectedTags([]);
+              updateUrlParams({ tags: null });
+              
+              // 검색어도 없으면 일반 모드로 전환
+              if (!searchKeyword.trim()) {
+                setIsSearchMode(false);
+              }
+            }}
             color="primary"
             variant="outlined"
           />
