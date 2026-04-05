@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Box, 
   Typography, 
@@ -35,6 +35,12 @@ const BlogList = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
+  /**
+   * handleTagClick 등에서 setSearchParams 직후 한 틱 동안 useSearchParams()가 이전 값을 주는 경우가 있어,
+   * URL 동기화 effect가 tags=없음으로 착각하고 selectedTags·isSearchMode를 지우는 레이스를 막는다.
+   */
+  const skipStaleEmptySearchParamsSyncRef = useRef(false);
+
   const [posts, setPosts] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
   const [allTags, setAllTags] = useState([]);
@@ -61,11 +67,23 @@ const BlogList = () => {
 
     setCurrentPage(pageFromUrl);
     setSelectedCategoryKey(categoryFromUrl);
+
+    const urlImpliesActiveSearch = searchFromUrl !== '' || tagsFromUrl.length > 0;
+    const isLikelyStaleEmptySearchInUrl =
+      skipStaleEmptySearchParamsSyncRef.current &&
+      !urlImpliesActiveSearch;
+
+    if (isLikelyStaleEmptySearchInUrl) {
+      return;
+    }
+
+    skipStaleEmptySearchParamsSyncRef.current = false;
+
     setSearchKeyword(searchFromUrl);
     setSelectedTags((previousTags) =>
       isSameOrderedTagList(previousTags, tagsFromUrl) ? previousTags : tagsFromUrl
     );
-    setIsSearchMode(searchFromUrl !== '' || tagsFromUrl.length > 0);
+    setIsSearchMode(urlImpliesActiveSearch);
   }, [searchParams]);
 
   // URL 업데이트 헬퍼 함수
@@ -200,6 +218,8 @@ const BlogList = () => {
     try {
       // 검색 모드로 전환
       setIsSearchMode(true);
+
+      skipStaleEmptySearchParamsSyncRef.current = true;
       
       updateUrlParams({ 
         page: 1,
@@ -319,6 +339,9 @@ const BlogList = () => {
     } else {
       // 검색 모드 유지
       setIsSearchMode(true);
+      if (newTags.length > 0) {
+        skipStaleEmptySearchParamsSyncRef.current = true;
+      }
       updateUrlParams({ 
         page: 1,
         search: newSearchKeyword || null,
