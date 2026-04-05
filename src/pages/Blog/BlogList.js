@@ -26,6 +26,11 @@ const ALL_CATEGORY = {
   is_active: true 
 };
 
+/** URL 동기화 시 매 렌더마다 새 []/새 배열이 들어가 selectedTags 의존 effect(디바운스 검색)가 불필요하게 재실행되는 것을 막기 위함 */
+const isSameOrderedTagList = (previousTags, nextTags) =>
+  previousTags.length === nextTags.length &&
+  previousTags.every((tag, index) => tag === nextTags[index]);
+
 const BlogList = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -57,7 +62,9 @@ const BlogList = () => {
     setCurrentPage(pageFromUrl);
     setSelectedCategoryKey(categoryFromUrl);
     setSearchKeyword(searchFromUrl);
-    setSelectedTags(tagsFromUrl);
+    setSelectedTags((previousTags) =>
+      isSameOrderedTagList(previousTags, tagsFromUrl) ? previousTags : tagsFromUrl
+    );
     setIsSearchMode(searchFromUrl !== '' || tagsFromUrl.length > 0);
   }, [searchParams]);
 
