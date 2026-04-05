@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
 import { 
   Box, 
   Typography, 
@@ -12,7 +12,7 @@ import {
   Paper,
   Pagination
 } from '@mui/material';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useNavigationType } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import { getPostsWithPageNumber, searchPostsWithPageNumber } from '../../services/posts';
@@ -31,15 +31,28 @@ const isSameOrderedTagList = (previousTags, nextTags) =>
   previousTags.length === nextTags.length &&
   previousTags.every((tag, index) => tag === nextTags[index]);
 
+/** posts 목록 쿼리 스코프 — URL→state 동기화 시 “방금 우리가 쓴 URL”과 구분 */
+const blogListUrlScopeSignature = (params) => {
+  const u = params instanceof URLSearchParams ? params : new URLSearchParams(params);
+  return [
+    u.get('page') || '',
+    u.get('category') || '',
+    u.get('search') || '',
+    u.get('tags') || '',
+  ].join('\u0001');
+};
+
 const BlogList = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const navigationType = useNavigationType();
 
   /**
-   * handleTagClick 등에서 setSearchParams 직후 한 틱 동안 useSearchParams()가 이전 값을 주는 경우가 있어,
-   * URL 동기화 effect가 tags=없음으로 착각하고 selectedTags·isSearchMode를 지우는 레이스를 막는다.
+   * setSearchParams 직후 한 번 layout에서 읽는 searchParams가 아직 이전 값이면
+   * 그걸로 state를 덮지 않기 위해, 직전에 기록한 목표 시그니처와 다르면 동기화를 건너뛴다.
+   * 뒤로가기(POP)는 예외로 항상 URL 기준으로 맞춘다.
    */
-  const skipStaleEmptySearchParamsSyncRef = useRef(false);
+  const pendingUrlScopeSignatureRef = useRef(null);
 
   const [posts, setPosts] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
@@ -52,15 +65,33 @@ const BlogList = () => {
   const [categories, setCategories] = useState([ALL_CATEGORY]);
   const [categoryCounts, setCategoryCounts] = useState({});
   const [selectedCategoryKey, setSelectedCategoryKey] = useState('all');
+  /** updateUrlParams 콜백이 stale한 previousParams로 병합할 때 category 쿼리가 빠지는 것을 막기 위함 */
+  const selectedCategoryKeyRef = useRef(selectedCategoryKey);
+  selectedCategoryKeyRef.current = selectedCategoryKey;
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [searchTotalCount, setSearchTotalCount] = useState(0);
   
   const POSTS_PER_PAGE = 10;
 
-  // URL 파라미터 변경 감지 및 state 동기화
-  useEffect(() => {
-    const pageFromUrl = parseInt(searchParams.get('page')) || 1;
+  // URL 파라미터 변경 감지 및 state 동기화 (layout: 페인트 전, 라우터 반영 직후)
+  useLayoutEffect(() => {
+    if (navigationType === 'POP') {
+      pendingUrlScopeSignatureRef.current = null;
+    }
+
+    const sig = blogListUrlScopeSignature(searchParams);
+    const pending = pendingUrlScopeSignatureRef.current;
+
+    if (pending !== null && sig !== pending && navigationType !== 'POP') {
+      return;
+    }
+
+    if (pending !== null && sig === pending) {
+      pendingUrlScopeSignatureRef.current = null;
+    }
+
+    const pageFromUrl = parseInt(searchParams.get('page'), 10) || 1;
     const categoryFromUrl = searchParams.get('category') || 'all';
     const searchFromUrl = searchParams.get('search') || '';
     const tagsFromUrl = searchParams.get('tags') ? searchParams.get('tags').split(',') : [];
@@ -69,39 +100,40 @@ const BlogList = () => {
     setSelectedCategoryKey(categoryFromUrl);
 
     const urlImpliesActiveSearch = searchFromUrl !== '' || tagsFromUrl.length > 0;
-    const isLikelyStaleEmptySearchInUrl =
-      skipStaleEmptySearchParamsSyncRef.current &&
-      !urlImpliesActiveSearch;
-
-    if (isLikelyStaleEmptySearchInUrl) {
-      return;
-    }
-
-    skipStaleEmptySearchParamsSyncRef.current = false;
 
     setSearchKeyword(searchFromUrl);
     setSelectedTags((previousTags) =>
       isSameOrderedTagList(previousTags, tagsFromUrl) ? previousTags : tagsFromUrl
     );
     setIsSearchMode(urlImpliesActiveSearch);
-  }, [searchParams]);
+  }, [searchParams, navigationType]);
 
-  // URL 업데이트 헬퍼 함수
+  // URL 업데이트: setSearchParams(prev => …)로 병합 + category는 명시하지 않으면 현재 선택값 유지(전체가 아닐 때)
   const updateUrlParams = useCallback((updates) => {
-    const newParams = new URLSearchParams(searchParams);
-    
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value === null || value === undefined || value === '' || (Array.isArray(value) && value.length === 0)) {
-        newParams.delete(key);
-      } else if (Array.isArray(value)) {
-        newParams.set(key, value.join(','));
-      } else {
-        newParams.set(key, value.toString());
+    setSearchParams((previousParams) => {
+      const newParams = new URLSearchParams(previousParams);
+      const categoryKeyExplicitInUpdates = Object.prototype.hasOwnProperty.call(updates, 'category');
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value === null || value === undefined || value === '' || (Array.isArray(value) && value.length === 0)) {
+          newParams.delete(key);
+        } else if (Array.isArray(value)) {
+          newParams.set(key, value.join(','));
+        } else {
+          newParams.set(key, value.toString());
+        }
+      });
+      if (!categoryKeyExplicitInUpdates) {
+        const categoryKeyToPersist = selectedCategoryKeyRef.current;
+        if (categoryKeyToPersist && categoryKeyToPersist !== 'all') {
+          newParams.set('category', categoryKeyToPersist);
+        } else {
+          newParams.delete('category');
+        }
       }
-    });
-
-    setSearchParams(newParams, { replace: true });
-  }, [searchParams, setSearchParams]);
+      pendingUrlScopeSignatureRef.current = blogListUrlScopeSignature(newParams);
+      return newParams;
+    }, { replace: true });
+  }, [setSearchParams]);
 
   // 카테고리 조회
   useEffect(() => {
@@ -207,6 +239,7 @@ const BlogList = () => {
     if (!searchKeyword.trim() && selectedTags.length === 0) {
       // 검색 조건이 없으면 일반 모드로 전환
       setIsSearchMode(false);
+      setCurrentPage(1);
       updateUrlParams({ 
         page: 1,
         search: null,
@@ -218,8 +251,7 @@ const BlogList = () => {
     try {
       // 검색 모드로 전환
       setIsSearchMode(true);
-
-      skipStaleEmptySearchParamsSyncRef.current = true;
+      setCurrentPage(1);
       
       updateUrlParams({ 
         page: 1,
@@ -331,6 +363,7 @@ const BlogList = () => {
     if (newTags.length === 0 && !newSearchKeyword.trim()) {
       // 검색 조건이 없으면 일반 모드로 전환
       setIsSearchMode(false);
+      setCurrentPage(1);
       updateUrlParams({ 
         page: 1,
         search: null,
@@ -339,9 +372,7 @@ const BlogList = () => {
     } else {
       // 검색 모드 유지
       setIsSearchMode(true);
-      if (newTags.length > 0) {
-        skipStaleEmptySearchParamsSyncRef.current = true;
-      }
+      setCurrentPage(1);
       updateUrlParams({ 
         page: 1,
         search: newSearchKeyword || null,
@@ -568,7 +599,8 @@ const BlogList = () => {
             label={`선택된 태그: ${selectedTags.length}개`}
             onDelete={() => {
               setSelectedTags([]);
-              updateUrlParams({ tags: null });
+              setCurrentPage(1);
+              updateUrlParams({ tags: null, page: 1 });
               
               // 검색어도 없으면 일반 모드로 전환
               if (!searchKeyword.trim()) {
